@@ -67,7 +67,10 @@ Committet niemals echte Zugangsdaten in dieses Repo (z.B. in einer `.env`).
   abgelegt — ändert sich der Key danach (z.B. durch einen MITM), schlägt die
   Verbindung fehl statt kommentarlos durchzulaufen.
 - Cache, Lock-Datei und `known_hosts` liegen in einem dedizierten, nicht
-  world-writable Verzeichnis (`0700`, `www-data`) statt in `/tmp`.
+  world-writable Verzeichnis (`0700`, `www-data`) statt in `/tmp`. Der
+  Container-Entrypoint setzt diese Rechte bei jedem Start neu (nicht nur beim
+  Image-Build), da ein Volume oder Bind-Mount an `TS_CACHE_DIR` die im Image
+  gesetzten Rechte sonst überschreiben würde.
 
 ## Entwicklung
 

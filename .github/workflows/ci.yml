@@ -19,3 +19,29 @@ jobs:
           done
       - name: Protokoll-Selbsttest
         run: php bin/selftest_parser.php
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker Image bauen
+        run: docker build -t ts-viewer:ci .
+      - name: App-Dateien im Image pruefen
+        # Faengt genau die Bug-Klasse "Dockerfile baut erfolgreich, kopiert die
+        # App aber nicht ins Image" - ein reiner "docker build"-Erfolg allein
+        # haette das nicht erkannt.
+        run: docker run --rm ts-viewer:ci test -f /var/www/html/index.php
+      - name: Container starten und HTTP-Smoke-Test
+        run: |
+          docker run -d --name ts-viewer-ci -p 8080:80 ts-viewer:ci
+          for i in $(seq 1 10); do
+            STATUS=$(curl -s -o /tmp/body.html -w "%{http_code}" http://127.0.0.1:8080/ || true)
+            [ "$STATUS" = "200" ] && break
+            sleep 1
+          done
+          echo "HTTP status: $STATUS"
+          cat /tmp/body.html
+          docker logs ts-viewer-ci
+          docker rm -f ts-viewer-ci
+          [ "$STATUS" = "200" ]
+          grep -q "nicht konfiguriert" /tmp/body.html

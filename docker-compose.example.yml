@@ -1,6 +1,12 @@
 services:
   ts-viewer:
-    build: .
+    # Baut direkt aus dem getaggten Release statt einem lokalen Checkout, damit
+    # der Build reproduzierbar auf einer bestimmten Version basiert. Fuer einen
+    # anderen Stand einfach den Tag anpassen oder auf "build: ." umstellen, wenn
+    # aus einem lokalen Checkout gebaut werden soll.
+    build:
+      context: https://github.com/Don-Wombat/ts-viewer.git#v0.1.1
+    image: ts-viewer:v0.1.1
     ports:
       - "8080:80"
     environment:

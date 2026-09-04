@@ -21,6 +21,9 @@ function ts_create_transport(array $config): TsQueryTransport {
         case 'raw':
             return new TsRawTransport($config);
         default:
-            throw new InvalidArgumentException("Unbekannter TS_TRANSPORT: {$config['transport']}");
+            // TsTransportException statt InvalidArgumentException, damit der
+            // bestehende catch(TsTransportException) in ts_client.php das
+            // abfaengt statt eine rohe PHP-Fehlerseite auszuliefern.
+            throw new TsTransportException("Unbekannter TS_TRANSPORT: {$config['transport']}");
     }
 }

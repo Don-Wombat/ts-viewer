@@ -10,3 +10,7 @@ COPY docker/entrypoint.sh /usr/local/bin/ts-viewer-entrypoint.sh
 RUN chmod +x /usr/local/bin/ts-viewer-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/ts-viewer-entrypoint.sh"]
 CMD ["apache2-foreground"]
+
+# Kein curl noetig: php -r nutzt den bereits vorhandenen http-Stream-Wrapper.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD php -r "exit(@file_get_contents('http://127.0.0.1/?health=1') === 'ok' ? 0 : 1);"

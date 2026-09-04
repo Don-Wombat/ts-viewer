@@ -10,6 +10,22 @@ require __DIR__ . '/lib/render.php';
 
 $config = ts_load_config();
 
+// Gilt fuer Vollseite UND ?ajax=1/?health=1 - deshalb hier zentral vor der
+// Verzweigung statt in jedem Zweig einzeln gesetzt.
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: no-referrer');
+header('X-Frame-Options: DENY');
+header("Content-Security-Policy: frame-ancestors 'none'");
+
+// ─── Health-Check ─────────────────────────────────────────────────────────────
+// Bewusst ohne TS-Server-Roundtrip/Cache-Zugriff - prueft nur, dass PHP/Apache
+// laufen (fuer Dockerfile HEALTHCHECK / externes Monitoring).
+if (isset($_GET['health'])) {
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'ok';
+    exit;
+}
+
 // ─── AJAX Refresh ─────────────────────────────────────────────────────────────
 if (isset($_GET['ajax'])) {
     header('Content-Type: text/html; charset=utf-8');

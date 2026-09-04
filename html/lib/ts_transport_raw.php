@@ -12,8 +12,13 @@ class TsRawTransport implements TsQueryTransport {
     public function query(string $commandBundle): string {
         $config = $this->config;
 
+        // IPv6-Literale brauchen Klammer-Syntax in der tcp://-URI (z.B.
+        // tcp://[::1]:10011), sonst wird der Host falsch geparst. IPv6-
+        // Literale enthalten immer ":", Hostnamen/IPv4 nie - einfache,
+        // zuverlaessige Unterscheidung ohne extra Validierung.
+        $host = str_contains($config['host'], ':') ? "[{$config['host']}]" : $config['host'];
         $sock = @stream_socket_client(
-            "tcp://{$config['host']}:{$config['port']}", $errno, $errstr, $config['connect_timeout']
+            "tcp://{$host}:{$config['port']}", $errno, $errstr, $config['connect_timeout']
         );
         if ($sock === false) {
             throw new TsTransportException("Verbindung fehlgeschlagen: $errstr ($errno)");

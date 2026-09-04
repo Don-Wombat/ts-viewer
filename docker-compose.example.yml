@@ -5,8 +5,8 @@ services:
     # anderen Stand einfach den Tag anpassen oder auf "build: ." umstellen, wenn
     # aus einem lokalen Checkout gebaut werden soll.
     build:
-      context: https://github.com/Don-Wombat/ts-viewer.git#v0.1.4
-    image: ts-viewer:v0.1.4
+      context: https://github.com/Don-Wombat/ts-viewer.git#v0.1.5
+    image: ts-viewer:v0.1.5
     ports:
       - "8080:80"
     env_file:

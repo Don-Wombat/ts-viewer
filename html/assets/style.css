@@ -1,0 +1,54 @@
+:root {
+  --bg: #0f0e0d; --surface: #1a1918; --surface2: #222120; --border: #2e2d2b;
+  --text: #d4d3d1; --muted: #787776; --faint: #4a4948;
+  --primary: #4f98a3; --primary-dim: #2a5a61;
+  --radius: 8px; --font: 'Inter', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.wrap { width: 100%; max-width: 480px; }
+.logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.logo svg { color: var(--primary); }
+.logo-text { font-size: 18px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); }
+.logo-sub { font-size: 12px; color: var(--muted); }
+
+/* Server card */
+.server-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 8px; }
+.server-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.server-icon { width: 36px; height: 36px; background: var(--primary-dim); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0; }
+.server-icon svg { width: 18px; height: 18px; }
+.server-name { display: block; font-weight: 600; font-size: 15px; }
+.server-online { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #4caf50; flex-shrink: 0; animation: pulse 2s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.stats { display: flex; gap: 0; border-top: 1px solid var(--border); padding-top: 12px; }
+.stat { flex: 1; text-align: center; }
+.stat + .stat { border-left: 1px solid var(--border); }
+.stat-val { display: block; font-size: 16px; font-weight: 700; color: var(--text); }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; display: block; }
+
+/* Tree */
+.tree { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.channel { border-bottom: 1px solid var(--border); }
+.channel:last-child { border-bottom: none; }
+.ch-row { display: flex; align-items: center; gap: 7px; padding: 7px 12px 7px 0; min-height: 34px; }
+.ch-icon { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; }
+.ch-icon svg { width: 14px; height: 14px; }
+.ch-name { flex: 1; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.channel.active .ch-name { color: var(--primary); }
+.ch-count { font-size: 11px; background: var(--primary-dim); color: var(--primary); border-radius: 10px; padding: 1px 7px; font-weight: 600; flex-shrink: 0; margin-right: 10px; }
+.client { display: flex; align-items: center; gap: 7px; padding: 5px 12px 5px 0; border-top: 1px solid var(--border); background: var(--surface2); }
+.cl-icon { width: 13px; height: 13px; color: var(--primary); flex-shrink: 0; }
+.cl-name { font-size: 12px; color: var(--text); flex: 1; }
+.client.away .cl-name { color: var(--muted); }
+.away-badge { font-size: 10px; background: var(--border); color: var(--muted); border-radius: 4px; padding: 1px 5px; margin-right: 10px; }
+.spacer { height: 4px; background: var(--bg); }
+
+/* Footer */
+.footer { font-size: 11px; color: var(--faint); text-align: center; padding: 10px; }
+.error { background: #2a1515; border: 1px solid #5a2020; color: #e07070; border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+
+/* Connect button */
+.connect-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; padding: 10px; background: var(--primary-dim); color: var(--primary); border: 1px solid var(--primary); border-radius: var(--radius); font-size: 13px; font-weight: 600; text-decoration: none; transition: background .15s; }
+.connect-btn:hover { background: var(--primary); color: #fff; }
+.connect-btn svg { width: 16px; height: 16px; }

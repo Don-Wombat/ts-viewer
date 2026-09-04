@@ -1,0 +1,17 @@
+services:
+  ts-viewer:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      TS_HOST: teamspeak-server
+      TS_USER: query-viewer
+      TS_PASS: "changeme"
+      TS_TRANSPORT: ssh
+      TS_BRAND_TITLE: "Mein TeamSpeak"
+      TS_CONNECT_URL: "ts3server://ts.example.org"
+    volumes:
+      - ts-viewer-cache:/var/cache/ts-viewer
+
+volumes:
+  ts-viewer-cache:

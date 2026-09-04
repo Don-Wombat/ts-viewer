@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+      - name: PHP Syntax-Check
+        run: |
+          for f in html/index.php html/config.php html/lib/*.php bin/*.php; do
+            php -l "$f"
+          done
+      - name: Protokoll-Selbsttest
+        run: php bin/selftest_parser.php

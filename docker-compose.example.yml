@@ -5,17 +5,12 @@ services:
     # anderen Stand einfach den Tag anpassen oder auf "build: ." umstellen, wenn
     # aus einem lokalen Checkout gebaut werden soll.
     build:
-      context: https://github.com/Don-Wombat/ts-viewer.git#v0.1.3
-    image: ts-viewer:v0.1.3
+      context: https://github.com/Don-Wombat/ts-viewer.git#v0.1.4
+    image: ts-viewer:v0.1.4
     ports:
       - "8080:80"
-    environment:
-      TS_HOST: teamspeak-server
-      TS_USER: query-viewer
-      TS_PASS: "changeme"
-      TS_TRANSPORT: ssh
-      TS_BRAND_TITLE: "Mein TeamSpeak"
-      TS_CONNECT_URL: "ts3server://ts.example.org"
+    env_file:
+      - .env
     volumes:
       - ts-viewer-cache:/var/cache/ts-viewer
 

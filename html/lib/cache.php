@@ -33,7 +33,7 @@ function ts_get_cached_or_fetch(array $config, callable $fetch): array {
     if (!is_dir($config['cache_dir'])) @mkdir($config['cache_dir'], 0700, true);
 
     $lockFp = @fopen($config['lock_file'], 'c');
-    if ($lockFp === false) return ['error' => 'Cache-Verzeichnis nicht beschreibbar.'];
+    if ($lockFp === false) return ['error' => ['key' => 'err_cache_dir']];
 
     flock($lockFp, LOCK_EX);
     // Ein anderer Prozess könnte den Cache erneuert haben, während wir auf den Lock warteten.

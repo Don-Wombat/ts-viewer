@@ -64,20 +64,26 @@ try {
     $serverinfo = '';
     $channellist = '';
     $clientlist = '';
+    $servergrouplist = '';
     foreach (explode("\n", $out) as $line) {
         $line = trim($line);
         if ($line === '' || strpos($line, 'error ') === 0 || strpos($line, 'Welcome') === 0) continue;
         if (strpos($line, 'virtualserver_name=') !== false) { $serverinfo = $line; continue; }
         if (strpos($line, 'channel_name=') !== false) { $channellist = $line; continue; }
         if (strpos($line, 'client_nickname=') !== false) { $clientlist = $line; continue; }
+        if (strpos($line, 'sgid=') !== false) { $servergrouplist = $line; continue; }
     }
     $info = ts_parse_single($serverinfo);
     $channels = ts_parse_list($channellist);
     $clients = ts_parse_list($clientlist);
+    $servergroups = ts_parse_list($servergrouplist);
 
     check('serverinfo enthaelt erwarteten Servernamen', ($info['virtualserver_name'] ?? null) === 'MockServer');
     check('channellist enthaelt Lobby', ($channels[0]['channel_name'] ?? null) === 'Lobby');
+    check('channellist enthaelt Topic', ($channels[0]['channel_topic'] ?? null) === 'Willkommen');
     check('clientlist enthaelt Alice', ($clients[0]['client_nickname'] ?? null) === 'Alice');
+    check('clientlist enthaelt Mute-Status', ($clients[0]['client_input_muted'] ?? null) === '1');
+    check('servergrouplist enthaelt Server Admin (escaped)', ($servergroups[0]['name'] ?? null) === 'Server Admin');
 } finally {
     stop_mock($mock);
 }

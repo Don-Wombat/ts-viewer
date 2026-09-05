@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/config.php';
 require __DIR__ . '/lib/ts_protocol.php';
+require __DIR__ . '/lib/i18n.php';
 require __DIR__ . '/lib/ts_transport.php';
 require __DIR__ . '/lib/ts_transport_ssh.php';
 require __DIR__ . '/lib/ts_transport_raw.php';
@@ -9,6 +10,18 @@ require __DIR__ . '/lib/cache.php';
 require __DIR__ . '/lib/render.php';
 
 $config = ts_load_config();
+
+// ─── Sprachauswahl ────────────────────────────────────────────────────────────
+// Prioritaet: ?lang=-Parameter (setzt gleichzeitig das Cookie) > vorhandenes
+// Cookie > TS_DEFAULT_LANG. Gilt fuer Vollseite UND ?ajax=1, da ts_render_tree()
+// intern ts_t() nutzt und die Sprache hier vor jeder Verzweigung gesetzt wird.
+$lang = $config['default_lang'];
+if (isset($_COOKIE['ts_lang'])) $lang = $_COOKIE['ts_lang'];
+if (isset($_GET['lang']) && in_array($_GET['lang'], TS_SUPPORTED_LANGS, true)) {
+    $lang = $_GET['lang'];
+    setcookie('ts_lang', $lang, time() + 60 * 60 * 24 * 365, '/');
+}
+ts_set_lang($lang);
 
 // Gilt fuer Vollseite UND ?ajax=1/?health=1 - deshalb hier zentral vor der
 // Verzweigung statt in jedem Zweig einzeln gesetzt.
@@ -36,7 +49,7 @@ if (isset($_GET['ajax'])) {
 $page_content = ts_render_tree($config);
 ?>
 <!DOCTYPE html>
-<html lang="de">
+<html lang="<?= htmlspecialchars($lang) ?>">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -55,6 +68,9 @@ $page_content = ts_render_tree($config);
       <path d="M6 14h2M20 14h2M14 22v-2"/>
     </svg>
     <div><div class="logo-text"><?= htmlspecialchars($config['brand_title']) ?></div><div class="logo-sub"><?= htmlspecialchars($config['brand_subtitle']) ?></div></div>
+    <div class="lang-switch">
+      <a href="?lang=de"<?= $lang === 'de' ? ' class="active"' : '' ?>>DE</a> · <a href="?lang=en"<?= $lang === 'en' ? ' class="active"' : '' ?>>EN</a>
+    </div>
   </div>
 
   <div id="ts-content"><?php echo $page_content; ?></div>
@@ -62,7 +78,7 @@ $page_content = ts_render_tree($config);
   <?php if (!empty($config['connect_url'])): ?>
   <a class="connect-btn" href="<?= htmlspecialchars($config['connect_url']) ?>">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/></svg>
-    Mit TeamSpeak verbinden
+    <?= htmlspecialchars(ts_t('connect_button')) ?>
   </a>
   <?php endif; ?>
 </div>

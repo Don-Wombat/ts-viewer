@@ -25,8 +25,8 @@ function ts_load_config(): array {
         'connect_timeout'    => (int)ts_env('TS_CONNECT_TIMEOUT', '5'),
 
         'cache_dir'          => ts_env('TS_CACHE_DIR', '/var/cache/ts-viewer'),
-        'ttl'                => 30, // Cache-Gültigkeit bei Erfolg (Sekunden)
-        'error_ttl'          => 10, // Cache-Gültigkeit bei Fehlern (kürzer, aber verhindert Verbindungssturm)
+        'ttl'                => (int)ts_env('TS_CACHE_TTL', '30'),       // Cache-Gültigkeit bei Erfolg (Sekunden)
+        'error_ttl'          => (int)ts_env('TS_CACHE_ERROR_TTL', '10'), // Cache-Gültigkeit bei Fehlern (kürzer, aber verhindert Verbindungssturm)
         'max_depth'          => 32, // Schutz gegen Endlos-Rekursion bei zyklischer Channel-Struktur
         'timezone'           => ts_env('TS_TIMEZONE', 'Europe/Berlin'),
 
@@ -34,6 +34,10 @@ function ts_load_config(): array {
         'brand_subtitle'     => ts_env('TS_BRAND_SUBTITLE', 'TeamSpeak Server'),
         'connect_url'        => ts_env('TS_CONNECT_URL'), // leer = Connect-Button ausgeblendet
         'theme_css_override' => ts_env('TS_THEME_CSS_OVERRIDE'),
+
+        // Default-Sprache, falls weder ?lang= noch das ts_lang-Cookie gesetzt
+        // sind. Default "de" aendert nichts am Verhalten bestehender Deployments.
+        'default_lang'       => ts_env('TS_DEFAULT_LANG', 'de'),
     ];
 
     $config['cache_file']       = $config['cache_dir'] . '/ts_cache.json';

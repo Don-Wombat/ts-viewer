@@ -1,9 +1,10 @@
 # ts-viewer
 
 Schlanke, self-hostbare PHP-Webseite, die per ServerQuery live anzeigt, wer
-gerade auf einem TeamSpeak-Server verbunden ist (Channel-Baum, Online-Clients,
-Away-Status). Ein PHP-Prozess + Docker, keine Node-Toolchain, kein
-Admin-Panel — bewusst nur eine read-only Live-Anzeige.
+gerade auf einem TeamSpeak-Server verbunden ist (Channel-Baum inkl. Topic,
+Online-Clients mit Away-/Mute-Status und Rollen-Badge). Ein PHP-Prozess +
+Docker, keine Node-Toolchain, kein Admin-Panel — bewusst nur eine read-only
+Live-Anzeige. UI auf Deutsch und Englisch.
 
 Unterstützt TeamSpeak 3 (ab Serverversion 3.3.0), TeamSpeak 5 und TeamSpeak 6.
 
@@ -49,13 +50,23 @@ verschiedene TS6-Serverversionen verifiziert.
 | `TS_QUERY_NICKNAME` | nein | `TS-Viewer` | Nickname, mit dem die Query-Verbindung im Client-Fenster sichtbar ist |
 | `TS_CONNECT_TIMEOUT` | nein | `5` | Timeout in Sekunden für den Verbindungsaufbau |
 | `TS_CACHE_DIR` | nein | `/var/cache/ts-viewer` | Verzeichnis für Cache/Lock/known_hosts |
+| `TS_CACHE_TTL` | nein | `30` | Cache-Gültigkeit bei Erfolg (Sekunden) |
+| `TS_CACHE_ERROR_TTL` | nein | `10` | Cache-Gültigkeit bei Fehlern (kürzer, verhindert Verbindungssturm) |
 | `TS_TIMEZONE` | nein | `Europe/Berlin` | Zeitzone für die "Aktualisiert um"-Anzeige |
 | `TS_BRAND_TITLE` | nein | `TeamSpeak Viewer` | `<title>` + Header-Text |
 | `TS_BRAND_SUBTITLE` | nein | `TeamSpeak Server` | Untertitel im Header |
 | `TS_CONNECT_URL` | nein | leer (Connect-Button ausgeblendet) | z.B. `ts3server://ts.example.org` |
 | `TS_THEME_CSS_OVERRIDE` | nein | leer | roher CSS-Block, überschreibt die `:root`-Variablen aus `html/assets/style.css` |
+| `TS_DEFAULT_LANG` | nein | `de` | Standardsprache (`de`\|`en`), siehe [Sprache](#sprache) |
 
 Committet niemals echte Zugangsdaten in dieses Repo (z.B. in einer `.env`).
+
+## Sprache
+
+Die UI gibt es auf Deutsch und Englisch. Jeder Besucher kann über den
+Umschalter im Header ("DE · EN") umschalten — die Wahl wird per Cookie
+gemerkt. Ohne Auswahl gilt `TS_DEFAULT_LANG` (Default `de`). Neue UI-Strings
+werden in `html/lib/i18n.php` gepflegt, siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Sicherheitshinweise
 
@@ -75,9 +86,17 @@ Committet niemals echte Zugangsdaten in dieses Repo (z.B. in einer `.env`).
 ## Entwicklung
 
 ```bash
-php -l html/index.php html/config.php html/lib/*.php   # Syntax-Check
-php bin/selftest_parser.php                              # Protokoll-Selbsttest
+php -l html/index.php html/config.php html/lib/*.php bin/*.php   # Syntax-Check
+php bin/selftest_parser.php                                        # Protokoll-Selbsttest
+php bin/test_raw_transport.php                                     # Transport-Integrationstest gegen Mock-Socket
 ```
+
+Siehe [CONTRIBUTING.md](CONTRIBUTING.md) für mehr Details (Konventionen,
+i18n-Strings, Sicherheitsmeldungen).
+
+## Changelog
+
+Siehe [CHANGELOG.md](CHANGELOG.md).
 
 ## Lizenz
 

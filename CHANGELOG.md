@@ -4,6 +4,12 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben
+- Triviale/Platzhalter-Channel-Topics (1 Zeichen, z.B. ein Überbleibsel-"1"
+  aus Channel-Vorlagen/Kopiervorgängen) werden nicht mehr angezeigt. Gefunden
+  live auf einem echten Server, auf dem ausnahmslos jeder Channel
+  `channel_topic="1"` gesetzt hatte.
+
 ## [v0.1.6] – Status-Icons, Topic, i18n, Docs, Review-Fixes
 
 ### Hinzugefügt

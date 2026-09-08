@@ -4,6 +4,8 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.1.6] – Status-Icons, Topic, i18n, Docs, Review-Fixes
+
 ### Hinzugefügt
 - `.dockerignore` (schließt `.env`, `.git`, `bin/deploy*` vom Docker-Build-Context aus)
 - CI-Integrationstest (`bin/mock_serverquery.php` + `bin/test_raw_transport.php`)
@@ -29,6 +31,22 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
   für literale IPv6-Hosts)
 - Verwaiste `pid`-Referenzen im Channel-Baum wurden stillschweigend nicht
   gerendert statt an die Wurzel gehängt zu werden
+- Kritisch (High-Effort-Review): Upgrade-Pfad mit noch vorhandener
+  Alt-Format-Cache-Datei (Fehler als String statt Key+Vars-Array) löste einen
+  uncaught `TypeError` aus — echte Fatal-Error-Seite für Besucher für bis zu
+  `error_ttl` Sekunden nach einem Deploy. `render.php` liest jetzt beide
+  Formate.
+- `TS_CACHE_TTL`/`TS_CACHE_ERROR_TTL` ohne Untergrenze: ein Tippfehler wie
+  `TS_CACHE_TTL=abc` castete zu `0`, schaltete den Cache faktisch ab und
+  erzeugte im Frontend Dauerpolling (`setInterval(fn, 0)`) gegen die eigene
+  Seite. Jetzt mit `max(1, ...)` abgesichert.
+- Ungültiger `ts_lang`-Cookie-Wert landete unvalidiert im `<html lang="...">`-
+  Attribut, obwohl intern schon der Deutsch-Fallback griff.
+
+Alle Punkte verifiziert: `php -l`, `bin/selftest_parser.php`,
+`bin/test_raw_transport.php`, sowie ein echter `docker build` +
+Container-Lauf gegen einen echten TeamSpeak-3-Server (DE und EN,
+Health-Endpoint, konfigurierte Cache-TTL, Alt-Cache-Kompatibilität).
 
 ## [v0.1.5] – bin/deploy\* aus dem Repo ausgeschlossen
 Rein organisatorisch: `bin/deploy.sh`/`bin/deploy.env(.example)` waren nur

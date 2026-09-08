@@ -17,6 +17,13 @@ cp .env.example .env    # ausfüllen
 docker compose -f docker-compose.example.yml up -d --build
 ```
 
+`docker-compose.example.yml` baut standardmäßig aus dem getaggten
+GitHub-Release. Alternativ gibt es fertige Images unter
+[`ghcr.io/don-wombat/ts-viewer`](https://github.com/Don-Wombat/ts-viewer/pkgs/container/ts-viewer)
+(z.B. `ghcr.io/don-wombat/ts-viewer:v0.1.6.2` oder `:latest`) — dafür in
+`docker-compose.example.yml` einfach `build:` gegen `image:
+ghcr.io/don-wombat/ts-viewer:<tag>` tauschen, spart den lokalen Build.
+
 Auf dem TS-Server wird ein dedizierter ServerQuery-Login empfohlen (nicht der
 Admin-Account) — die App braucht nur Lesezugriff auf `serverinfo`,
 `channellist`, `clientlist` und `servergrouplist` (für den Rollen-Badge, z.B.

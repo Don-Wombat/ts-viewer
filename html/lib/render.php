@@ -88,13 +88,19 @@ function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, i
         $here = $by_ch[$cid] ?? [];
         $active = !empty($here) ? ' active' : '';
         $indent = $depth * 16;
-        $topic = ts_unescape($c['channel_topic'] ?? '');
+        $topic = trim(ts_unescape($c['channel_topic'] ?? ''));
         $h .= '<div class="channel' . $active . '" style="padding-left:' . (12 + $indent) . 'px">';
         $h .= '<div class="ch-row"><span class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>';
         $h .= '<span class="ch-name">' . htmlspecialchars($name) . '</span>';
         if (!empty($here)) $h .= '<span class="ch-count">' . count($here) . '</span>';
         $h .= '</div>';
-        if ($topic !== '') {
+        // strlen (nicht mb_strlen - mbstring ist keine Abhaengigkeit dieses
+        // Projekts) > 1: blendet triviale/Platzhalter-Topics wie "1" aus
+        // (haeufiges Ueberbleibsel aus Channel-Vorlagen/Kopiervorgaengen) - ein
+        // einzelnes Zeichen ist praktisch nie ein absichtlich gesetztes Topic.
+        // Faelschlich nicht gefilterte Ein-Zeichen-Mehrbyte-Topics (z.B. ein
+        // Emoji) sind ein harmloser Grenzfall, kein echtes Problem.
+        if (strlen($topic) > 1) {
             $h .= '<div class="ch-topic" style="padding-left:' . (34 + $indent) . 'px">' . htmlspecialchars($topic) . '</div>';
         }
         foreach ($here as $cl) {

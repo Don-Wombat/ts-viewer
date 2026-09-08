@@ -25,8 +25,11 @@ function ts_load_config(): array {
         'connect_timeout'    => (int)ts_env('TS_CONNECT_TIMEOUT', '5'),
 
         'cache_dir'          => ts_env('TS_CACHE_DIR', '/var/cache/ts-viewer'),
-        'ttl'                => (int)ts_env('TS_CACHE_TTL', '30'),       // Cache-Gültigkeit bei Erfolg (Sekunden)
-        'error_ttl'          => (int)ts_env('TS_CACHE_ERROR_TTL', '10'), // Cache-Gültigkeit bei Fehlern (kürzer, aber verhindert Verbindungssturm)
+        // max(1, ...): ein Tippfehler wie TS_CACHE_TTL=abc castet zu 0 - ohne
+        // Untergrenze wuerde das den Cache faktisch abschalten UND im Frontend
+        // ein setInterval(fn, 0) erzeugen (Dauerpolling gegen die eigene Seite).
+        'ttl'                => max(1, (int)ts_env('TS_CACHE_TTL', '30')),       // Cache-Gültigkeit bei Erfolg (Sekunden)
+        'error_ttl'          => max(1, (int)ts_env('TS_CACHE_ERROR_TTL', '10')), // Cache-Gültigkeit bei Fehlern (kürzer, aber verhindert Verbindungssturm)
         'max_depth'          => 32, // Schutz gegen Endlos-Rekursion bei zyklischer Channel-Struktur
         'timezone'           => ts_env('TS_TIMEZONE', 'Europe/Berlin'),
 

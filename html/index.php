@@ -16,11 +16,16 @@ $config = ts_load_config();
 // Cookie > TS_DEFAULT_LANG. Gilt fuer Vollseite UND ?ajax=1, da ts_render_tree()
 // intern ts_t() nutzt und die Sprache hier vor jeder Verzweigung gesetzt wird.
 $lang = $config['default_lang'];
-if (isset($_COOKIE['ts_lang'])) $lang = $_COOKIE['ts_lang'];
+if (isset($_COOKIE['ts_lang']) && in_array($_COOKIE['ts_lang'], TS_SUPPORTED_LANGS, true)) $lang = $_COOKIE['ts_lang'];
 if (isset($_GET['lang']) && in_array($_GET['lang'], TS_SUPPORTED_LANGS, true)) {
     $lang = $_GET['lang'];
     setcookie('ts_lang', $lang, time() + 60 * 60 * 24 * 365, '/');
 }
+// Falls TS_DEFAULT_LANG selbst falsch gesetzt ist: dasselbe Deutsch-Fallback
+// wie in ts_set_lang(), aber schon hier - sonst wuerde <html lang="..."> und
+// die aktive DE/EN-Markierung einen ungueltigen Wert zeigen, obwohl intern
+// (ts_t()) bereits auf Deutsch gerendert wird.
+if (!in_array($lang, TS_SUPPORTED_LANGS, true)) $lang = 'de';
 ts_set_lang($lang);
 
 // Gilt fuer Vollseite UND ?ajax=1/?health=1 - deshalb hier zentral vor der

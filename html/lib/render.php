@@ -7,7 +7,13 @@ require_once __DIR__ . '/ts_client.php';
 function ts_render_tree(array $config): string {
     $data = ts_get_cached_or_fetch($config, fn() => ts_fetch_from_server($config));
     if (isset($data['error'])) {
-        $msg = ts_t($data['error']['key'], $data['error']['vars'] ?? []);
+        $err = $data['error'];
+        // Abwaertskompatibel zum alten Cache-Format (Fehler als fertiger String
+        // statt Uebersetzungs-Key+Vars): kann fuer bis zu error_ttl Sekunden nach
+        // einem Upgrade noch im persistenten Cache-Volume liegen. Ohne diesen
+        // Fallback wirft PHP 8 hier einen TypeError (String-Offset-Zugriff mit
+        // nicht-numerischem Key) - eine echte Fatal-Error-Seite fuer Besucher.
+        $msg = is_array($err) ? ts_t($err['key'] ?? 'err_unreachable', $err['vars'] ?? []) : (string)$err;
         return '<div class="error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ' . htmlspecialchars($msg) . '</div>';
     }
 

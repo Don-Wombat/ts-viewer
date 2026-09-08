@@ -4,11 +4,20 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.1.6.1] – Doku-Überarbeitung + Topic-Filter
+
 ### Behoben
 - Triviale/Platzhalter-Channel-Topics (1 Zeichen, z.B. ein Überbleibsel-"1"
   aus Channel-Vorlagen/Kopiervorgängen) werden nicht mehr angezeigt. Gefunden
   live auf einem echten Server, auf dem ausnahmslos jeder Channel
   `channel_topic="1"` gesetzt hatte.
+
+### Geändert
+- README: CI-Badge, `servergrouplist`-Berechtigung, Security-Header und
+  `?health=1`-Endpoint dokumentiert
+- CONTRIBUTING.md: Projekt-Layout-Übersicht ergänzt
+- GitHub-Release-Notes für v0.1.6 nachgetragen (vorher nur ein leeres,
+  automatisch angelegtes Release)
 
 ## [v0.1.6] – Status-Icons, Topic, i18n, Docs, Review-Fixes
 

@@ -1,5 +1,7 @@
 # ts-viewer
 
+[![CI](https://github.com/Don-Wombat/ts-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/Don-Wombat/ts-viewer/actions/workflows/ci.yml)
+
 Schlanke, self-hostbare PHP-Webseite, die per ServerQuery live anzeigt, wer
 gerade auf einem TeamSpeak-Server verbunden ist (Channel-Baum inkl. Topic,
 Online-Clients mit Away-/Mute-Status und Rollen-Badge). Ein PHP-Prozess +
@@ -17,7 +19,13 @@ docker compose -f docker-compose.example.yml up -d --build
 
 Auf dem TS-Server wird ein dedizierter ServerQuery-Login empfohlen (nicht der
 Admin-Account) — die App braucht nur Lesezugriff auf `serverinfo`,
-`channellist` und `clientlist`.
+`channellist`, `clientlist` und `servergrouplist` (für den Rollen-Badge, z.B.
+"Server Admin").
+
+Für Uptime-Monitoring: `?health=1` liefert `ok` (Text, HTTP 200) ohne
+TS-Server-Roundtrip — nur ein Check, dass PHP/Apache laufen. Der
+Docker-Container hat zusätzlich einen eingebauten `HEALTHCHECK` auf
+demselben Endpoint.
 
 ### Transport wählen
 
@@ -82,6 +90,13 @@ werden in `html/lib/i18n.php` gepflegt, siehe [CONTRIBUTING.md](CONTRIBUTING.md)
   Container-Entrypoint setzt diese Rechte bei jedem Start neu (nicht nur beim
   Image-Build), da ein Volume oder Bind-Mount an `TS_CACHE_DIR` die im Image
   gesetzten Rechte sonst überschreiben würde.
+- HTTP-Security-Header (`X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`,
+  `Content-Security-Policy: frame-ancestors 'none'`) auf jeder Antwort,
+  auch `?ajax=1`/`?health=1`.
+- Alle Werte aus dem TS-Server (Channel-/Nicknamen, Topics, Gruppennamen)
+  laufen vor der Ausgabe durch `htmlspecialchars()` — auch Rollen-Badges und
+  der Channel-Topic (neu seit v0.1.6).
 
 ## Entwicklung
 

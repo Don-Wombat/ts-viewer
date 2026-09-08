@@ -21,6 +21,21 @@ docker compose -f docker-compose.example.yml up -d --build
 
 See [README.md](README.md) for the full list of environment variables.
 
+## Project layout
+
+```
+html/index.php           Entry point: bootstraps config/i18n, routes ?ajax=1/?health=1
+html/config.php          Reads env vars into a $config array
+html/lib/ts_protocol.php  ServerQuery text-protocol escaping/parsing (transport-agnostic)
+html/lib/ts_transport*.php  SSH and raw-TCP ServerQuery transports (TsQueryTransport interface)
+html/lib/ts_client.php   Builds the ServerQuery command bundle, calls the transport, parses the result
+html/lib/cache.php       File-based cache with locking (avoids hammering the TS server)
+html/lib/render.php      Turns parsed data into the HTML channel tree
+html/lib/i18n.php        Translations (`ts_t()`) - see "Adding a UI string" below
+bin/                     CLI test scripts (not shipped in the Docker image beyond the app itself)
+docker/entrypoint.sh     Fixes TS_CACHE_DIR ownership at container start (survives volume mounts)
+```
+
 ## Running the tests
 
 There's no PHPUnit here — a couple of small, dependency-free scripts cover

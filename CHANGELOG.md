@@ -4,6 +4,13 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt
+- GitHub Actions Workflow (`publish.yml`), veröffentlicht das Docker-Image
+  bei jedem `v*`-Tag als GitHub Package unter
+  [`ghcr.io/don-wombat/ts-viewer`](https://github.com/Don-Wombat/ts-viewer/pkgs/container/ts-viewer)
+  (öffentlich, kein Login zum Pullen nötig) — Alternative zum lokalen Build
+  aus `docker-compose.example.yml`
+
 ## [v0.1.6.2] – DE-Übersetzungsfix
 
 ### Behoben

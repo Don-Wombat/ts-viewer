@@ -4,6 +4,14 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.1.6.2] – DE-Übersetzungsfix
+
+### Behoben
+- `Clients`/`Channels`/`Uptime`/`Away` waren im deutschen Sprachpaket
+  versehentlich auf Englisch belassen (fehlerhafte Design-Entscheidung beim
+  ursprünglichen i18n-Aufbau in v0.1.6) — jetzt korrekt "Nutzer", "Kanäle",
+  "Laufzeit", "Abwesend".
+
 ## [v0.1.6.1] – Doku-Überarbeitung + Topic-Filter
 
 ### Behoben

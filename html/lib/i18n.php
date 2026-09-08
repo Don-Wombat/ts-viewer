@@ -6,10 +6,10 @@
 $GLOBALS['TS_TRANSLATIONS'] = [
     'de' => [
         'online'            => 'Online',
-        'clients'           => 'Clients',
-        'channels'          => 'Channels',
-        'uptime'            => 'Uptime',
-        'away'              => 'Away',
+        'clients'           => 'Nutzer',
+        'channels'          => 'Kanäle',
+        'uptime'            => 'Laufzeit',
+        'away'              => 'Abwesend',
         'mic_muted'         => 'Mikrofon stumm',
         'speaker_muted'     => 'Lautsprecher stumm',
         'footer'            => 'Aktualisiert {time} · Refresh alle {sec}s',

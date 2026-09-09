@@ -22,7 +22,11 @@ function ts_load_config(): array {
         'pass'               => ts_env('TS_PASS', ''),
         'vport'              => (int)ts_env('TS_VPORT', '9987'),
         'query_nickname'     => ts_env('TS_QUERY_NICKNAME', 'TS-Viewer'),
-        'connect_timeout'    => (int)ts_env('TS_CONNECT_TIMEOUT', '5'),
+        // max(1, ...): a typo like TS_CONNECT_TIMEOUT=abc casts to 0, which
+        // stream_socket_client()/stream_set_timeout() (raw transport) and
+        // ssh's ConnectTimeout (ssh transport) would otherwise take as
+        // "block indefinitely" against an unreachable host.
+        'connect_timeout'    => max(1, (int)ts_env('TS_CONNECT_TIMEOUT', '5')),
 
         'cache_dir'          => ts_env('TS_CACHE_DIR', '/var/cache/ts-viewer'),
         // max(1, ...): a typo like TS_CACHE_TTL=abc casts to 0 - without a

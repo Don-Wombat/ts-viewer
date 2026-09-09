@@ -19,7 +19,14 @@ function ts_write_cache(array $config, array $result): void {
     // replaces a symlink that might exist at the target instead of following
     // it - protects against symlink attacks in addition to the directory permissions.
     $tmp = $config['cache_file'] . '.' . getmypid() . '.tmp';
-    file_put_contents($tmp, json_encode($result));
+    $json = json_encode($result);
+    if ($json === false) {
+        // Invalid UTF-8 in the data (e.g. from a malformed nickname) would
+        // otherwise silently write an empty cache file with no error logged.
+        error_log('ts-viewer: json_encode() failed while writing the cache: ' . json_last_error_msg());
+        return;
+    }
+    file_put_contents($tmp, $json);
     rename($tmp, $config['cache_file']);
 }
 

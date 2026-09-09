@@ -30,10 +30,25 @@ $roundTripInputs = [
     'with|pipe',
     "with\ttab\nand\rnewlines",
     'combo: \\ / | ' . "\t\n\r" . ' together',
+    // Regression test: a literal backslash immediately followed by a
+    // character that is itself an escape-sequence letter (s/p/n/r/t). A
+    // previous ts_unescape() implementation ran a separate str_replace()
+    // pass per escape sequence, so the second backslash of the doubled pair
+    // produced by ts_escape() plus the following real letter (e.g. "\\" + "s")
+    // could be misread as the unrelated "\s" (space) escape - e.g.
+    // "back\slash" round-tripped to "back lash" instead of "back\slash".
+    'back\\slash',
+    'end\\pipe',
+    'esc\\return',
 ];
 foreach ($roundTripInputs as $i => $input) {
     check("round-trip #$i", ts_unescape(ts_escape($input)), $input);
 }
+
+// Direct regression check (bypassing ts_escape()) for the exact failure
+// mode found in production: the raw wire form of "back\slash" (one literal
+// backslash) is two literal backslash characters on the wire.
+check('ts_unescape backslash-then-s does not become a space', ts_unescape('back' . '\\' . '\\' . 'slash'), 'back\\slash');
 
 check('ts_parse_item simple pairs', ts_parse_item('cid=5 pid=0 channel_name=Test'), [
     'cid' => '5', 'pid' => '0', 'channel_name' => 'Test',

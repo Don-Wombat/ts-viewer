@@ -79,8 +79,4 @@ please don't open a public issue — see below.
 
 ## Security
 
-This project handles TeamSpeak ServerQuery credentials and runs inside
-Docker with fairly deliberate hardening (see the "Security notes" section in
-the README). If you find a security issue, please report it privately
-(GitHub's "Report a vulnerability" under the Security tab) rather than as a
-public issue.
+See [SECURITY.md](SECURITY.md) for how to report a vulnerability privately.

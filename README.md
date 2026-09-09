@@ -73,8 +73,6 @@ different TS6 server versions.
 | `TS_THEME_CSS_OVERRIDE` | no | empty | raw CSS block, overrides the `:root` variables from `html/assets/style.css` |
 | `TS_DEFAULT_LANG` | no | `de` | Default language (`de`\|`en`), see [Language](#language) |
 
-Never commit real credentials into this repo (e.g. in a `.env`).
-
 ## Language
 
 The UI is available in German and English. Every visitor can switch via the

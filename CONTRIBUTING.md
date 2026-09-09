@@ -3,10 +3,12 @@
 Thanks for considering a contribution! A quick note on conventions before you
 dive in:
 
-- **Code comments are in German.** That's the existing convention throughout
-  the codebase (`html/`, `bin/`) and new code should match it for
-  consistency. Issues, discussions and pull request descriptions in English
-  are very welcome, though — no need to translate your PR text.
+- **Code, comments, docs and commit messages are in English.** That's the
+  project convention going forward (an earlier version of this file used to
+  say comments were in German — that's no longer the case, everything has
+  been translated). The one exception: `html/lib/i18n.php`'s `'de'` array is
+  the actual German language pack shown to end users and must stay in
+  German — that's content, not a comment.
 - Keep changes minimal and focused. This project is intentionally a single
   small PHP app + Docker image, not a framework — please avoid introducing
   build tooling, dependencies, or an ORM/framework unless there's no
@@ -78,7 +80,7 @@ please don't open a public issue — see below.
 ## Security
 
 This project handles TeamSpeak ServerQuery credentials and runs inside
-Docker with fairly deliberate hardening (see the "Sicherheitshinweise"
-section in the README). If you find a security issue, please report it
-privately (GitHub's "Report a vulnerability" under the Security tab) rather
-than as a public issue.
+Docker with fairly deliberate hardening (see the "Security notes" section in
+the README). If you find a security issue, please report it privately
+(GitHub's "Report a vulnerability" under the Security tab) rather than as a
+public issue.

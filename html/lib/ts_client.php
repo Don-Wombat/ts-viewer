@@ -4,12 +4,12 @@ require_once __DIR__ . '/ts_transport.php';
 require_once __DIR__ . '/ts_transport_ssh.php';
 require_once __DIR__ . '/ts_transport_raw.php';
 
-// Fragt den TS-Server per konfiguriertem Transport ab und liefert die
-// geparsten serverinfo/channellist/clientlist/servergrouplist-Daten
-// (oder ['error' => ['key' => ..., 'vars' => [...]]]).
-// Fehler werden als Uebersetzungs-Key statt fertigem Text zurueckgegeben,
-// damit render.php sie sprachabhaengig anzeigen kann (siehe lib/i18n.php) -
-// das ueberlebt auch den JSON-Cache-Roundtrip in cache.php problemlos.
+// Queries the TS server via the configured transport and returns the parsed
+// serverinfo/channellist/clientlist/servergrouplist data
+// (or ['error' => ['key' => ..., 'vars' => [...]]]).
+// Errors are returned as a translation key instead of ready-made text, so
+// render.php can display them in the current language (see lib/i18n.php) -
+// this also survives the JSON cache roundtrip in cache.php without issues.
 function ts_fetch_from_server(array $config): array {
     foreach (['host' => 'TS_HOST', 'user' => 'TS_USER', 'pass' => 'TS_PASS'] as $key => $var) {
         if (($config[$key] ?? '') === '') {
@@ -29,14 +29,14 @@ function ts_fetch_from_server(array $config): array {
         $transport = ts_create_transport($config);
         $out = $transport->query($commands);
     } catch (TsTransportException $e) {
-        error_log('ts-viewer: Transport-Fehler: ' . $e->getMessage());
+        error_log('ts-viewer: transport error: ' . $e->getMessage());
         return ['error' => ['key' => 'err_unreachable']];
     }
 
     if (strpos($out, 'virtualserver_name') === false) {
-        // Rohe ServerQuery-Ausgabe nur ins Log, nicht an anonyme Besucher
-        // (kann interne Hostnamen/Banner enthalten).
-        error_log('ts-viewer: keine Antwort vom TS-Server: ' . strip_tags($out));
+        // Raw ServerQuery output only goes to the log, not to anonymous
+        // visitors (may contain internal hostnames/banners).
+        error_log('ts-viewer: no response from the TS server: ' . strip_tags($out));
         return ['error' => ['key' => 'err_unreachable']];
     }
 

@@ -1,9 +1,9 @@
 <?php
-// ─── Konfiguration ────────────────────────────────────────────────────────────
-// Alles kommt ausschliesslich aus Umgebungsvariablen - nichts Projektspezifisches
-// darf im Code landen. TS_HOST/TS_USER/TS_PASS haben bewusst KEINEN Default:
-// ohne gesetzte Variablen zeigt die App einen Konfigurationsfehler statt
-// stillschweigend gegen einen falschen Server zu laufen.
+// ─── Configuration ────────────────────────────────────────────────────────────
+// Everything comes exclusively from environment variables - nothing project-
+// specific may live in the code. TS_HOST/TS_USER/TS_PASS deliberately have
+// NO default: without the variables set, the app shows a configuration error
+// instead of silently running against the wrong server.
 
 function ts_env(string $name, ?string $default = null): ?string {
     $v = getenv($name);
@@ -25,21 +25,21 @@ function ts_load_config(): array {
         'connect_timeout'    => (int)ts_env('TS_CONNECT_TIMEOUT', '5'),
 
         'cache_dir'          => ts_env('TS_CACHE_DIR', '/var/cache/ts-viewer'),
-        // max(1, ...): ein Tippfehler wie TS_CACHE_TTL=abc castet zu 0 - ohne
-        // Untergrenze wuerde das den Cache faktisch abschalten UND im Frontend
-        // ein setInterval(fn, 0) erzeugen (Dauerpolling gegen die eigene Seite).
-        'ttl'                => max(1, (int)ts_env('TS_CACHE_TTL', '30')),       // Cache-Gültigkeit bei Erfolg (Sekunden)
-        'error_ttl'          => max(1, (int)ts_env('TS_CACHE_ERROR_TTL', '10')), // Cache-Gültigkeit bei Fehlern (kürzer, aber verhindert Verbindungssturm)
-        'max_depth'          => 32, // Schutz gegen Endlos-Rekursion bei zyklischer Channel-Struktur
+        // max(1, ...): a typo like TS_CACHE_TTL=abc casts to 0 - without a
+        // floor that would effectively disable the cache AND produce a
+        // setInterval(fn, 0) in the frontend (constant polling against itself).
+        'ttl'                => max(1, (int)ts_env('TS_CACHE_TTL', '30')),       // cache validity on success (seconds)
+        'error_ttl'          => max(1, (int)ts_env('TS_CACHE_ERROR_TTL', '10')), // cache validity on errors (shorter, but prevents a connection storm)
+        'max_depth'          => 32, // guard against infinite recursion on a cyclic channel structure
         'timezone'           => ts_env('TS_TIMEZONE', 'Europe/Berlin'),
 
         'brand_title'        => ts_env('TS_BRAND_TITLE', 'TeamSpeak Viewer'),
         'brand_subtitle'     => ts_env('TS_BRAND_SUBTITLE', 'TeamSpeak Server'),
-        'connect_url'        => ts_env('TS_CONNECT_URL'), // leer = Connect-Button ausgeblendet
+        'connect_url'        => ts_env('TS_CONNECT_URL'), // empty = connect button hidden
         'theme_css_override' => ts_env('TS_THEME_CSS_OVERRIDE'),
 
-        // Default-Sprache, falls weder ?lang= noch das ts_lang-Cookie gesetzt
-        // sind. Default "de" aendert nichts am Verhalten bestehender Deployments.
+        // Default language if neither ?lang= nor the ts_lang cookie is set.
+        // Default "de" doesn't change behavior for existing deployments.
         'default_lang'       => ts_env('TS_DEFAULT_LANG', 'de'),
     ];
 

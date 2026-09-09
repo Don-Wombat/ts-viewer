@@ -1,7 +1,7 @@
 <?php
-// Standalone-TCP-Mock eines Raw-ServerQuery-Servers fuer bin/test_raw_transport.php.
-// Reines Test-Fixture, nicht Teil der App.
-// Aufruf: php bin/mock_serverquery.php <port> [ok|fail]
+// Standalone TCP mock of a raw ServerQuery server for bin/test_raw_transport.php.
+// Test fixture only, not part of the app.
+// Usage: php bin/mock_serverquery.php <port> [ok|fail]
 
 $port = (int)($argv[1] ?? 0);
 $mode = $argv[2] ?? 'ok';
@@ -16,8 +16,8 @@ if (!$server) {
     exit(1);
 }
 
-// Signalisiert dem Testtreiber, dass der Mock bereit ist, statt dass dieser
-// auf gut Glueck eine feste Zeit schlafen muss.
+// Signals the test driver that the mock is ready, instead of it having to
+// sleep for a fixed time and hope for the best.
 echo "listening\n";
 flush();
 
@@ -32,7 +32,7 @@ fwrite($conn, "TS3\n");
 fwrite($conn, "Welcome to the TeamSpeak ServerQuery interface, type \"help\" for a list of commands.\n");
 
 $loginLine = fgets($conn);
-fwrite(STDERR, "mock: got login: " . ($loginLine !== false ? $loginLine : "(nichts)\n"));
+fwrite(STDERR, "mock: got login: " . ($loginLine !== false ? $loginLine : "(none)\n"));
 
 if ($mode === 'fail') {
     fwrite($conn, "error id=520 msg=invalid\\sloginname\\sor\\spassword\n");
@@ -53,7 +53,7 @@ while (!feof($conn)) {
 fwrite(STDERR, "mock: got bundle:\n$rest");
 
 fwrite($conn, "virtualserver_name=MockServer virtualserver_maxclients=32 virtualserver_uptime=100 virtualserver_default_server_group=8\n");
-fwrite($conn, "cid=1 pid=0 channel_name=Lobby channel_topic=Willkommen\n");
+fwrite($conn, "cid=1 pid=0 channel_name=Lobby channel_topic=Welcome\n");
 fwrite($conn, "clid=1 cid=1 client_nickname=Alice client_type=0 client_away=0 client_input_muted=1 client_output_muted=0 client_servergroups=6\n");
 fwrite($conn, "sgid=6 name=Server\\sAdmin|sgid=8 name=Guest\n");
 fwrite($conn, "error id=0 msg=ok\n");

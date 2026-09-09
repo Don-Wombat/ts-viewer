@@ -11,40 +11,40 @@ require __DIR__ . '/lib/render.php';
 
 $config = ts_load_config();
 
-// ─── Sprachauswahl ────────────────────────────────────────────────────────────
-// Prioritaet: ?lang=-Parameter (setzt gleichzeitig das Cookie) > vorhandenes
-// Cookie > TS_DEFAULT_LANG. Gilt fuer Vollseite UND ?ajax=1, da ts_render_tree()
-// intern ts_t() nutzt und die Sprache hier vor jeder Verzweigung gesetzt wird.
+// ─── Language selection ───────────────────────────────────────────────────────
+// Priority: ?lang= parameter (also sets the cookie) > existing cookie >
+// TS_DEFAULT_LANG. Applies to the full page AND ?ajax=1, since ts_render_tree()
+// uses ts_t() internally and the language is set here before any branching.
 $lang = $config['default_lang'];
 if (isset($_COOKIE['ts_lang']) && in_array($_COOKIE['ts_lang'], TS_SUPPORTED_LANGS, true)) $lang = $_COOKIE['ts_lang'];
 if (isset($_GET['lang']) && in_array($_GET['lang'], TS_SUPPORTED_LANGS, true)) {
     $lang = $_GET['lang'];
     setcookie('ts_lang', $lang, time() + 60 * 60 * 24 * 365, '/');
 }
-// Falls TS_DEFAULT_LANG selbst falsch gesetzt ist: dasselbe Deutsch-Fallback
-// wie in ts_set_lang(), aber schon hier - sonst wuerde <html lang="..."> und
-// die aktive DE/EN-Markierung einen ungueltigen Wert zeigen, obwohl intern
-// (ts_t()) bereits auf Deutsch gerendert wird.
+// If TS_DEFAULT_LANG itself is set to an invalid value: same German fallback
+// as in ts_set_lang(), but already here - otherwise <html lang="..."> and the
+// active DE/EN marker would show an invalid value even though the actual
+// rendering (ts_t()) already falls back to German internally.
 if (!in_array($lang, TS_SUPPORTED_LANGS, true)) $lang = 'de';
 ts_set_lang($lang);
 
-// Gilt fuer Vollseite UND ?ajax=1/?health=1 - deshalb hier zentral vor der
-// Verzweigung statt in jedem Zweig einzeln gesetzt.
+// Applies to the full page AND ?ajax=1/?health=1 - set centrally here before
+// the branching instead of in each branch individually.
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('X-Frame-Options: DENY');
 header("Content-Security-Policy: frame-ancestors 'none'");
 
-// ─── Health-Check ─────────────────────────────────────────────────────────────
-// Bewusst ohne TS-Server-Roundtrip/Cache-Zugriff - prueft nur, dass PHP/Apache
-// laufen (fuer Dockerfile HEALTHCHECK / externes Monitoring).
+// ─── Health check ─────────────────────────────────────────────────────────────
+// Deliberately no TS server roundtrip/cache access - only checks that
+// PHP/Apache are running (for the Dockerfile HEALTHCHECK / external monitoring).
 if (isset($_GET['health'])) {
     header('Content-Type: text/plain; charset=utf-8');
     echo 'ok';
     exit;
 }
 
-// ─── AJAX Refresh ─────────────────────────────────────────────────────────────
+// ─── AJAX refresh ─────────────────────────────────────────────────────────────
 if (isset($_GET['ajax'])) {
     header('Content-Type: text/html; charset=utf-8');
     echo ts_render_tree($config);

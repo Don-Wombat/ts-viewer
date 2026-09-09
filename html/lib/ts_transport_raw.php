@@ -2,34 +2,34 @@
 require_once __DIR__ . '/ts_transport.php';
 require_once __DIR__ . '/ts_protocol.php';
 
-// Klassisches Raw-TCP-ServerQuery (Telnet-artig, Standardport 10011). Nach dem
-// Connect sendet der Server einen zweizeiligen Banner, danach MUSS der Client
-// explizit "login <user> <pass>" senden, bevor er andere Kommandos schicken
-// darf. Unverschlüsselt - siehe README fuer Sicherheitsempfehlungen.
+// Classic raw-TCP ServerQuery (telnet-like, default port 10011). After
+// connecting, the server sends a two-line banner, then the client MUST
+// explicitly send "login <user> <pass>" before it can send any other
+// commands. Unencrypted - see README for security recommendations.
 class TsRawTransport implements TsQueryTransport {
     public function __construct(private array $config) {}
 
     public function query(string $commandBundle): string {
         $config = $this->config;
 
-        // IPv6-Literale brauchen Klammer-Syntax in der tcp://-URI (z.B.
-        // tcp://[::1]:10011), sonst wird der Host falsch geparst. IPv6-
-        // Literale enthalten immer ":", Hostnamen/IPv4 nie - einfache,
-        // zuverlaessige Unterscheidung ohne extra Validierung.
+        // IPv6 literals need bracket syntax in the tcp:// URI (e.g.
+        // tcp://[::1]:10011), otherwise the host gets parsed incorrectly.
+        // IPv6 literals always contain ":", hostnames/IPv4 never do - a
+        // simple, reliable distinction without extra validation.
         $host = str_contains($config['host'], ':') ? "[{$config['host']}]" : $config['host'];
         $sock = @stream_socket_client(
             "tcp://{$host}:{$config['port']}", $errno, $errstr, $config['connect_timeout']
         );
         if ($sock === false) {
-            throw new TsTransportException("Verbindung fehlgeschlagen: $errstr ($errno)");
+            throw new TsTransportException("Connection failed: $errstr ($errno)");
         }
 
         try {
             stream_set_timeout($sock, $config['connect_timeout']);
-            $this->readLines($sock, 2); // Welcome-Banner (2 Zeilen)
+            $this->readLines($sock, 2); // welcome banner (2 lines)
             $this->login($sock, $config['user'], $config['pass']);
 
-            stream_set_timeout($sock, 8); // das restliche Kommando-Bundle darf laenger dauern
+            stream_set_timeout($sock, 8); // the rest of the command bundle is allowed to take longer
             fwrite($sock, $commandBundle);
             return stream_get_contents($sock);
         } finally {
@@ -37,15 +37,15 @@ class TsRawTransport implements TsQueryTransport {
         }
     }
 
-    // Liest exakt $count Zeilen, timeout-bewacht statt eine feste Bytezahl
-    // anzunehmen - Banner-Laenge kann zwischen TS-Versionen leicht variieren.
+    // Reads exactly $count lines, timeout-guarded instead of assuming a fixed
+    // byte count - banner length can vary slightly between TS versions.
     private function readLines($sock, int $count): string {
         $buf = '';
         for ($i = 0; $i < $count; $i++) {
             $line = fgets($sock);
             if ($line === false) {
                 $meta = stream_get_meta_data($sock);
-                throw new TsTransportException($meta['timed_out'] ? 'Timeout beim Banner-Empfang' : 'Verbindung beim Banner-Empfang abgebrochen');
+                throw new TsTransportException($meta['timed_out'] ? 'Timeout while receiving banner' : 'Connection aborted while receiving banner');
             }
             $buf .= $line;
         }
@@ -53,18 +53,18 @@ class TsRawTransport implements TsQueryTransport {
     }
 
     private function login($sock, string $user, string $pass): void {
-        // ServerQuery-Escaping (kein Shell-Escaping - es gibt keine Shell im Raw-Pfad).
+        // ServerQuery escaping (no shell escaping - there is no shell on the raw path).
         fwrite($sock, sprintf("login %s %s\n", ts_escape($user), ts_escape($pass)));
 
-        // Die Login-Antwort ist immer genau eine Statuszeile ("error id=... msg=...").
+        // The login response is always exactly one status line ("error id=... msg=...").
         $line = fgets($sock);
         if ($line === false) {
             $meta = stream_get_meta_data($sock);
-            throw new TsAuthException($meta['timed_out'] ? 'Timeout beim Login' : 'Verbindung beim Login abgebrochen');
+            throw new TsAuthException($meta['timed_out'] ? 'Timeout during login' : 'Connection aborted during login');
         }
         if (strpos($line, 'error id=0 ') === false) {
-            // Passwort darf niemals in eine Exception-Message oder ins Log wandern.
-            throw new TsAuthException('ServerQuery-Login fehlgeschlagen');
+            // The password must never end up in an exception message or a log.
+            throw new TsAuthException('ServerQuery login failed');
         }
     }
 }

@@ -1,11 +1,11 @@
 <?php
-// ─── Datei-Cache ────────────────────────────────────────────────────────────────
-// Cache/Lock liegen in einem dedizierten, nicht world-writable Verzeichnis
-// (0700, www-data) statt in /tmp - schuetzt vor Symlink-Angriffen.
+// ─── File cache ─────────────────────────────────────────────────────────────────
+// Cache/lock live in a dedicated, non-world-writable directory (0700,
+// www-data) instead of /tmp - protects against symlink attacks.
 
 function ts_read_cache(array $config): ?array {
     $file = $config['cache_file'];
-    // is_link()-Check: niemals über einen (potenziell untergeschobenen) Symlink lesen.
+    // is_link() check: never read through a (potentially planted) symlink.
     if (!file_exists($file) || is_link($file)) return null;
     $data = json_decode((string)file_get_contents($file), true);
     if (!is_array($data) || !isset($data['updated'])) return null;
@@ -15,17 +15,17 @@ function ts_read_cache(array $config): ?array {
 }
 
 function ts_write_cache(array $config, array $result): void {
-    // Atomarer Write: erst in Temp-Datei schreiben, dann rename(). rename()
-    // ersetzt einen evtl. vorhandenen Symlink an der Zielposition, statt ihm
-    // zu folgen - schützt zusätzlich zu den Directory-Rechten vor Symlink-Angriffen.
+    // Atomic write: write to a temp file first, then rename(). rename()
+    // replaces a symlink that might exist at the target instead of following
+    // it - protects against symlink attacks in addition to the directory permissions.
     $tmp = $config['cache_file'] . '.' . getmypid() . '.tmp';
     file_put_contents($tmp, json_encode($result));
     rename($tmp, $config['cache_file']);
 }
 
-// Liest aus dem Cache oder ruft $fetch() auf, wenn der Cache abgelaufen ist.
-// Lock verhindert, dass bei gleichzeitigen Requests nach Cache-Ablauf mehrere
-// Verbindungen parallel gegen den TS-Server laufen ("thundering herd").
+// Reads from the cache, or calls $fetch() if the cache has expired. The lock
+// prevents multiple connections from running against the TS server in
+// parallel ("thundering herd") when several requests hit an expired cache at once.
 function ts_get_cached_or_fetch(array $config, callable $fetch): array {
     $cached = ts_read_cache($config);
     if ($cached !== null) return $cached;
@@ -36,7 +36,7 @@ function ts_get_cached_or_fetch(array $config, callable $fetch): array {
     if ($lockFp === false) return ['error' => ['key' => 'err_cache_dir']];
 
     flock($lockFp, LOCK_EX);
-    // Ein anderer Prozess könnte den Cache erneuert haben, während wir auf den Lock warteten.
+    // Another process might have refreshed the cache while we were waiting for the lock.
     $cached = ts_read_cache($config);
     if ($cached !== null) {
         flock($lockFp, LOCK_UN);

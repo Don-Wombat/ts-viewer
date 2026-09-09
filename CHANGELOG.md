@@ -2,7 +2,7 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [v0.1.7] – Whole-repo review + CI/supply-chain hardening
 
 ### Added
 - GitHub Actions workflow (`publish.yml`), publishes the Docker image as a
@@ -10,6 +10,60 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   [`ghcr.io/don-wombat/ts-viewer`](https://github.com/Don-Wombat/ts-viewer/pkgs/container/ts-viewer)
   on every `v*` tag (public, no login required to pull) — an alternative to
   the local build from `docker-compose.example.yml`
+- `.github/dependabot.yml`: weekly update PRs for the Docker base image and
+  the GitHub Actions used in CI
+- `SECURITY.md`: dedicated security policy (GitHub surfaces this specially
+  in the repo's Security tab)
+- Repo-level hardening: secret scanning + push protection, Dependabot
+  security updates, and basic branch protection on `main` (blocks force
+  pushes/deletion) all enabled
+
+### Changed
+- `Dockerfile` pins the base image to a digest instead of the floating
+  `php:8.3-apache` tag, for reproducible builds
+- Both workflows pin all third-party Actions (`actions/checkout`,
+  `shivammathur/setup-php`, `docker/login-action`,
+  `docker/build-push-action`) to a commit SHA instead of a floating
+  major-version tag
+- `ci.yml` now has an explicit `permissions: contents: read` block
+
+### Fixed
+- `ts_unescape()` (`ts_protocol.php`) could misinterpret an escaped
+  backslash followed by an escape-sequence letter (s/p/n/r/t) as a
+  different escape entirely — e.g. the wire form of `back\slash` decoded to
+  `back lash`. Rewritten as a single left-to-right scan instead of chained
+  `str_replace()` passes; found and fixed as part of a full-repo review.
+- `render.php` unescaped several values a second time that `ts_parse_item()`
+  already had — harmless on its own, but combined with the bug above it
+  actively corrupted names/topics containing a literal backslash. Removed.
+- `ts_client.php`'s raw-response-line classifier used an unanchored
+  substring search, so a TS user's own nickname or channel name (both
+  attacker-controlled) containing e.g. `channel_name=` as literal text could
+  misclassify a whole clientlist line as the channellist response,
+  corrupting the public page's data for all visitors. Now anchored to
+  "start of line or preceded by a space" (safe because ServerQuery always
+  escapes a literal space in values, so a real space in the raw response can
+  only be an actual field separator).
+- `TS_CONNECT_TIMEOUT` had no floor like `TS_CACHE_TTL`/`TS_CACHE_ERROR_TTL`
+  already do — a typo casting it to `0` could block indefinitely against an
+  unreachable host. Now guarded with `max(1, ...)`.
+- The recursion guard in `ts_render_channels()` compared against the visual
+  indentation depth, which spacer channels intentionally don't increment —
+  a chain of nested spacer channels could therefore recurse unbounded. Now
+  guarded by a separate counter that always increments.
+- An invalid `TS_TIMEZONE` threw an uncaught `DateTimeZone` exception,
+  crashing every render. Now falls back to UTC and logs the problem.
+- `ts_write_cache()` didn't check `json_encode()`'s return value — invalid
+  UTF-8 in the data would silently write an empty cache file. Now checked,
+  logged and skipped on failure.
+
+All points found via a combined code-review + security-review pass over the
+whole repository, each verified individually (not just `php -l`): a direct
+`ts_unescape()` round-trip repro, a before/after check of the classifier
+misclassification, a 50-level nested-spacer-channel render, an
+invalid-timezone fallback check, a `json_encode()`-failure check, and the
+`connect_timeout` floor — plus both existing test suites (`selftest_parser.php`
+now also covers the backslash-escape edge case, `test_raw_transport.php`).
 
 ## [v0.1.6.2] – German translation fix
 

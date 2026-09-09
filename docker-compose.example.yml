@@ -4,8 +4,8 @@ services:
     # against a specific version. To use a different state, either change
     # the tag or switch to "build: ." to build from a local checkout.
     build:
-      context: https://github.com/Don-Wombat/ts-viewer.git#v0.1.6.2
-    image: ts-viewer:v0.1.6.2
+      context: https://github.com/Don-Wombat/ts-viewer.git#v0.1.7
+    image: ts-viewer:v0.1.7
     restart: unless-stopped
     ports:
       - "8080:80"

@@ -35,7 +35,7 @@ docker compose -f docker-compose.example.yml up -d --build
 `docker-compose.example.yml` builds from the tagged GitHub release by
 default. Alternatively, prebuilt images are available at
 [`ghcr.io/don-wombat/ts-viewer`](https://github.com/Don-Wombat/ts-viewer/pkgs/container/ts-viewer)
-(e.g. `ghcr.io/don-wombat/ts-viewer:v0.1.6.2` or `:latest`) — just swap
+(e.g. `ghcr.io/don-wombat/ts-viewer:v0.1.7` or `:latest`) — just swap
 `build:` for `image: ghcr.io/don-wombat/ts-viewer:<tag>` in
 `docker-compose.example.yml` to skip the local build.
 

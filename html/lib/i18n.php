@@ -1,7 +1,10 @@
 <?php
-// ─── Übersetzungen ──────────────────────────────────────────────────────────
-// Simpler Key-Value-Ansatz statt gettext/Intl - reicht fuer den ueberschaubaren
-// Satz an UI-Strings dieses Projekts und braucht keine PHP-Extension.
+// ─── Translations ─────────────────────────────────────────────────────────────
+// Simple key-value approach instead of gettext/Intl - sufficient for this
+// project's manageable set of UI strings and doesn't need a PHP extension.
+// Note: the 'de' array below is the actual German language pack shown to
+// end users when they pick German - its values are content, not comments,
+// and must stay in German.
 
 $GLOBALS['TS_TRANSLATIONS'] = [
     'de' => [
@@ -34,7 +37,7 @@ $GLOBALS['TS_TRANSLATIONS'] = [
     ],
 ];
 
-// Unterstuetzte Sprachen, u.a. fuer den ?lang=-Parameter-Whitelist-Check in index.php.
+// Supported languages, used e.g. for the ?lang= parameter whitelist check in index.php.
 const TS_SUPPORTED_LANGS = ['de', 'en'];
 
 $GLOBALS['ts_current_lang'] = 'de';
@@ -43,9 +46,9 @@ function ts_set_lang(string $lang): void {
     $GLOBALS['ts_current_lang'] = in_array($lang, TS_SUPPORTED_LANGS, true) ? $lang : 'de';
 }
 
-// Uebersetzt $key in der aktuell gesetzten Sprache, mit {platzhalter}-Ersetzung
-// aus $vars. Fallback bei fehlendem Key: der Key selbst (nie eine leere/kaputte
-// Ausgabe), Fallback bei fehlender Sprache: Deutsch.
+// Translates $key in the currently set language, with {placeholder}
+// substitution from $vars. Fallback for a missing key: the key itself (never
+// an empty/broken output), fallback for a missing language: German.
 function ts_t(string $key, array $vars = []): string {
     $lang = $GLOBALS['ts_current_lang'] ?? 'de';
     $str = $GLOBALS['TS_TRANSLATIONS'][$lang][$key]

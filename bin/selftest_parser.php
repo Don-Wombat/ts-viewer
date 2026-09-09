@@ -1,7 +1,7 @@
 <?php
-// Einfacher CLI-Selbsttest fuer die transport-unabhaengigen ServerQuery-
-// Protokollfunktionen (kein PHPUnit noetig fuer diesen Projektumfang).
-// Aufruf: php bin/selftest_parser.php
+// Simple CLI self-test for the transport-independent ServerQuery protocol
+// functions (no PHPUnit needed for a project this size).
+// Usage: php bin/selftest_parser.php
 require __DIR__ . '/../html/lib/ts_protocol.php';
 
 $failures = 0;
@@ -16,12 +16,12 @@ function check(string $label, $actual, $expected): void {
     }
 }
 
-// ts_escape()/ts_unescape() muessen sich fuer beliebige Kombinationen von
-// Sonderzeichen exakt umkehren (z.B. ein ServerQuery-Login-Passwort, das
-// Backslash, Slash, Leerzeichen, Pipe und Whitespace gleichzeitig enthaelt).
-// Ein round-trip-Test deckt die kritische "Backslash zuerst"-Escape-
-// Reihenfolge indirekt aber zuverlaessig ab: bei falscher Reihenfolge
-// scheitert genau der "combo"-Fall unten.
+// ts_escape()/ts_unescape() must invert each other exactly for any
+// combination of special characters (e.g. a ServerQuery login password that
+// contains backslash, slash, space, pipe and whitespace at the same time).
+// A round-trip test covers the critical "backslash first" escape order
+// indirectly but reliably: with the wrong order, exactly the "combo" case
+// below fails.
 $roundTripInputs = [
     'simple',
     'with space',
@@ -57,7 +57,7 @@ check('ts_uptime hours', ts_uptime(3700), '1h 1m');
 check('ts_uptime minutes', ts_uptime(120), '2m');
 
 if ($failures > 0) {
-    fwrite(STDERR, "\n$failures Test(s) fehlgeschlagen.\n");
+    fwrite(STDERR, "\n$failures test(s) failed.\n");
     exit(1);
 }
-echo "\nAlle Tests erfolgreich.\n";
+echo "\nAll tests passed.\n";

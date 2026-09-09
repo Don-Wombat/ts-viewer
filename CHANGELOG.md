@@ -1,108 +1,107 @@
 # Changelog
 
-Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Hinzugefügt
-- GitHub Actions Workflow (`publish.yml`), veröffentlicht das Docker-Image
-  bei jedem `v*`-Tag als GitHub Package unter
+### Added
+- GitHub Actions workflow (`publish.yml`), publishes the Docker image as a
+  GitHub Package under
   [`ghcr.io/don-wombat/ts-viewer`](https://github.com/Don-Wombat/ts-viewer/pkgs/container/ts-viewer)
-  (öffentlich, kein Login zum Pullen nötig) — Alternative zum lokalen Build
-  aus `docker-compose.example.yml`
+  on every `v*` tag (public, no login required to pull) — an alternative to
+  the local build from `docker-compose.example.yml`
 
-## [v0.1.6.2] – DE-Übersetzungsfix
+## [v0.1.6.2] – German translation fix
 
-### Behoben
-- `Clients`/`Channels`/`Uptime`/`Away` waren im deutschen Sprachpaket
-  versehentlich auf Englisch belassen (fehlerhafte Design-Entscheidung beim
-  ursprünglichen i18n-Aufbau in v0.1.6) — jetzt korrekt "Nutzer", "Kanäle",
-  "Laufzeit", "Abwesend".
+### Fixed
+- `Clients`/`Channels`/`Uptime`/`Away` were accidentally left in English in
+  the German language pack (a mistake in the original i18n setup in v0.1.6)
+  — now correctly "Nutzer", "Kanäle", "Laufzeit", "Abwesend".
 
-## [v0.1.6.1] – Doku-Überarbeitung + Topic-Filter
+## [v0.1.6.1] – Docs rework + topic filter
 
-### Behoben
-- Triviale/Platzhalter-Channel-Topics (1 Zeichen, z.B. ein Überbleibsel-"1"
-  aus Channel-Vorlagen/Kopiervorgängen) werden nicht mehr angezeigt. Gefunden
-  live auf einem echten Server, auf dem ausnahmslos jeder Channel
-  `channel_topic="1"` gesetzt hatte.
+### Fixed
+- Trivial/placeholder channel topics (1 character, e.g. a leftover "1" from
+  channel templates/copy operations) are no longer shown. Found live on a
+  real server where literally every channel had `channel_topic="1"` set.
 
-### Geändert
-- README: CI-Badge, `servergrouplist`-Berechtigung, Security-Header und
-  `?health=1`-Endpoint dokumentiert
-- CONTRIBUTING.md: Projekt-Layout-Übersicht ergänzt
-- GitHub-Release-Notes für v0.1.6 nachgetragen (vorher nur ein leeres,
-  automatisch angelegtes Release)
+### Changed
+- README: documented the CI badge, the `servergrouplist` permission, the
+  security headers and the `?health=1` endpoint
+- CONTRIBUTING.md: added a project layout overview
+- Added GitHub release notes for v0.1.6 (previously just an empty,
+  auto-created release)
 
-## [v0.1.6] – Status-Icons, Topic, i18n, Docs, Review-Fixes
+## [v0.1.6] – Status icons, topic, i18n, docs, review fixes
 
-### Hinzugefügt
-- `.dockerignore` (schließt `.env`, `.git`, `bin/deploy*` vom Docker-Build-Context aus)
-- CI-Integrationstest (`bin/mock_serverquery.php` + `bin/test_raw_transport.php`)
-  für den tatsächlichen Verbindungs-/Login-/Parsing-Pfad des Raw-Transports
+### Added
+- `.dockerignore` (excludes `.env`, `.git`, `bin/deploy*` from the Docker build context)
+- CI integration test (`bin/mock_serverquery.php` + `bin/test_raw_transport.php`)
+  covering the actual connect/login/parsing path of the raw transport
 - `restart: unless-stopped` in `docker-compose.example.yml`
-- Security-Header (`X-Content-Type-Options`, `Referrer-Policy`,
+- Security headers (`X-Content-Type-Options`, `Referrer-Policy`,
   `X-Frame-Options`, `Content-Security-Policy: frame-ancestors`)
-- `?health=1`-Endpoint ohne TS-Server-Roundtrip + Dockerfile-`HEALTHCHECK`
-- Konfigurierbare Cache-TTL (`TS_CACHE_TTL`, `TS_CACHE_ERROR_TTL`)
-- Channel-Topic-Anzeige
-- Mute-Status-Icons (Mikrofon/Lautsprecher) und Server-Gruppen-Badge
-  (z.B. "Server Admin") pro Client
-- Sprachauswahl Deutsch/Englisch (`TS_DEFAULT_LANG`, `?lang=de|en`,
-  Umschalter im Header)
-- `CONTRIBUTING.md` und Issue-Templates
-- Diese `CHANGELOG.md`
+- `?health=1` endpoint without a TS server roundtrip + Dockerfile `HEALTHCHECK`
+- Configurable cache TTL (`TS_CACHE_TTL`, `TS_CACHE_ERROR_TTL`)
+- Channel topic display
+- Mute status icons (microphone/speaker) and a server group badge
+  (e.g. "Server Admin") per client
+- Language selection German/English (`TS_DEFAULT_LANG`, `?lang=de|en`,
+  toggle in the header)
+- `CONTRIBUTING.md` and issue templates
+- This `CHANGELOG.md`
 
-### Behoben
-- `ts_create_transport()` warf bei unbekanntem `TS_TRANSPORT` eine
-  `InvalidArgumentException`, die vom bestehenden `catch` nicht abgefangen
-  wurde → rohe PHP-Fehlerseite statt Fehler-Box
-- IPv6-Bug im Raw-Transport (`stream_socket_client` brauchte Klammer-Syntax
-  für literale IPv6-Hosts)
-- Verwaiste `pid`-Referenzen im Channel-Baum wurden stillschweigend nicht
-  gerendert statt an die Wurzel gehängt zu werden
-- Kritisch (High-Effort-Review): Upgrade-Pfad mit noch vorhandener
-  Alt-Format-Cache-Datei (Fehler als String statt Key+Vars-Array) löste einen
-  uncaught `TypeError` aus — echte Fatal-Error-Seite für Besucher für bis zu
-  `error_ttl` Sekunden nach einem Deploy. `render.php` liest jetzt beide
-  Formate.
-- `TS_CACHE_TTL`/`TS_CACHE_ERROR_TTL` ohne Untergrenze: ein Tippfehler wie
-  `TS_CACHE_TTL=abc` castete zu `0`, schaltete den Cache faktisch ab und
-  erzeugte im Frontend Dauerpolling (`setInterval(fn, 0)`) gegen die eigene
-  Seite. Jetzt mit `max(1, ...)` abgesichert.
-- Ungültiger `ts_lang`-Cookie-Wert landete unvalidiert im `<html lang="...">`-
-  Attribut, obwohl intern schon der Deutsch-Fallback griff.
+### Fixed
+- `ts_create_transport()` threw an `InvalidArgumentException` on an unknown
+  `TS_TRANSPORT`, which wasn't caught by the existing `catch` → a raw PHP
+  error page instead of the error box
+- IPv6 bug in the raw transport (`stream_socket_client` needed bracket
+  syntax for literal IPv6 hosts)
+- Orphaned `pid` references in the channel tree were silently not rendered
+  instead of being attached to the root
+- Critical (found during a high-effort review): an upgrade path with an
+  old-format cache file still present (error as a string instead of a
+  key+vars array) triggered an uncaught `TypeError` — a real fatal-error
+  page for visitors for up to `error_ttl` seconds after a deploy.
+  `render.php` now reads both formats.
+- `TS_CACHE_TTL`/`TS_CACHE_ERROR_TTL` had no floor: a typo like
+  `TS_CACHE_TTL=abc` cast to `0`, effectively disabling the cache and
+  producing constant polling (`setInterval(fn, 0)`) against the page itself
+  in the frontend. Now guarded with `max(1, ...)`.
+- An invalid `ts_lang` cookie value ended up unvalidated in the
+  `<html lang="...">` attribute, even though the German fallback already
+  applied internally.
 
-Alle Punkte verifiziert: `php -l`, `bin/selftest_parser.php`,
-`bin/test_raw_transport.php`, sowie ein echter `docker build` +
-Container-Lauf gegen einen echten TeamSpeak-3-Server (DE und EN,
-Health-Endpoint, konfigurierte Cache-TTL, Alt-Cache-Kompatibilität).
+All points verified: `php -l`, `bin/selftest_parser.php`,
+`bin/test_raw_transport.php`, as well as a real `docker build` + container
+run against a real TeamSpeak 3 server (DE and EN, health endpoint,
+configured cache TTL, old-cache compatibility).
 
-## [v0.1.5] – bin/deploy\* aus dem Repo ausgeschlossen
-Rein organisatorisch: `bin/deploy.sh`/`bin/deploy.env(.example)` waren nur
-für lokales Testen gedacht und enthielten reale Infrastruktur-Details
-(IP, Port, Pfad) — jetzt per `.gitignore` komplett vom Repo ausgeschlossen.
+## [v0.1.5] – bin/deploy\* excluded from the repo
+Purely organizational: `bin/deploy.sh`/`bin/deploy.env(.example)` were only
+meant for local testing and contained real infrastructure details (IP,
+port, path) — now fully excluded from the repo via `.gitignore`.
 
-## [v0.1.4] – Fix: `.env` wurde nie tatsächlich eingelesen
-`docker-compose.example.yml` hatte feste Beispielwerte im
-`environment:`-Block statt `env_file: .env` zu nutzen. Jede Änderung an
-`.env` blieb dadurch wirkungslos (z.B. `TS_HOST ist nicht konfiguriert`
-trotz gesetztem `TS_HOST`).
+## [v0.1.4] – Fix: `.env` was never actually read
+`docker-compose.example.yml` had fixed example values in the
+`environment:` block instead of using `env_file: .env`. Any change to
+`.env` was therefore ineffective (e.g. `TS_HOST is not configured` despite
+`TS_HOST` being set).
 
-## [v0.1.3] – Fix: Cache-Verzeichnis-Rechte überleben jetzt Volume-/Bind-Mounts
-`chown` im Dockerfile wirkt nur auf das Image — ein Volume oder Bind-Mount an
-`TS_CACHE_DIR` überschreibt die dort gesetzten Rechte vollständig. Ein neuer
-Container-Entrypoint (`docker/entrypoint.sh`) setzt die Rechte jetzt bei
-jedem Container-Start neu.
+## [v0.1.3] – Fix: cache directory permissions now survive volume/bind mounts
+`chown` in the Dockerfile only affects the image — a volume or bind mount
+at `TS_CACHE_DIR` completely overrides the permissions set there. A new
+container entrypoint (`docker/entrypoint.sh`) now resets the permissions on
+every container start.
 
-## [v0.1.2] – Kritischer Fix: Dockerfile kopierte `html/` nie ins Image
-Das `Dockerfile` installierte nur Pakete, ohne die App jemals per `COPY`
-ins Image zu kopieren — jeder frische Build (auch v0.1.1) lieferte 403 statt
-der eigentlichen Seite aus.
+## [v0.1.2] – Critical fix: Dockerfile never copied `html/` into the image
+The `Dockerfile` only installed packages without ever `COPY`ing the app
+into the image — every fresh build (including v0.1.1) served a 403 instead
+of the actual page.
 
-## [v0.1.1] – Initial Release
-Erste öffentliche Version: Modulstruktur (`config.php`, `lib/ts_protocol.php`,
-`lib/ts_transport*.php`, `lib/ts_client.php`, `lib/cache.php`, `lib/render.php`),
-austauschbarer SSH- oder Raw-TCP-ServerQuery-Transport für TS3 (ab 3.3.0),
-TS5 und TS6, vollständig über Umgebungsvariablen konfigurierbares Branding,
-MIT-Lizenz.
+## [v0.1.1] – Initial release
+First public version: module structure (`config.php`, `lib/ts_protocol.php`,
+`lib/ts_transport*.php`, `lib/ts_client.php`, `lib/cache.php`,
+`lib/render.php`), swappable SSH or raw-TCP ServerQuery transport for TS3
+(from 3.3.0), TS5 and TS6, branding fully configurable via environment
+variables, MIT license.

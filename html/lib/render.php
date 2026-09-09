@@ -8,11 +8,12 @@ function ts_render_tree(array $config): string {
     $data = ts_get_cached_or_fetch($config, fn() => ts_fetch_from_server($config));
     if (isset($data['error'])) {
         $err = $data['error'];
-        // Abwaertskompatibel zum alten Cache-Format (Fehler als fertiger String
-        // statt Uebersetzungs-Key+Vars): kann fuer bis zu error_ttl Sekunden nach
-        // einem Upgrade noch im persistenten Cache-Volume liegen. Ohne diesen
-        // Fallback wirft PHP 8 hier einen TypeError (String-Offset-Zugriff mit
-        // nicht-numerischem Key) - eine echte Fatal-Error-Seite fuer Besucher.
+        // Backwards compatible with the old cache format (error as a
+        // ready-made string instead of a translation key+vars): can still be
+        // sitting in the persistent cache volume for up to error_ttl seconds
+        // after an upgrade. Without this fallback PHP 8 throws a TypeError
+        // here (string offset access with a non-numeric key) - a real
+        // fatal-error page for visitors.
         $msg = is_array($err) ? ts_t($err['key'] ?? 'err_unreachable', $err['vars'] ?? []) : (string)$err;
         return '<div class="error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ' . htmlspecialchars($msg) . '</div>';
     }
@@ -21,7 +22,7 @@ function ts_render_tree(array $config): string {
     $channels = $data['channellist'] ?? [];
     $clients  = array_values(array_filter($data['clientlist'] ?? [], fn($c) => ($c['client_type'] ?? '0') === '0'));
 
-    // Server-Gruppen-ID -> Name, fuer den Rollen-Badge (z.B. "Server Admin").
+    // Server group ID -> name, for the role badge (e.g. "Server Admin").
     $sgMap = [];
     foreach ($data['servergrouplist'] ?? [] as $sg) {
         if (isset($sg['sgid'])) $sgMap[$sg['sgid']] = ts_unescape($sg['name'] ?? '');
@@ -44,10 +45,10 @@ function ts_render_tree(array $config): string {
     $h .= '<div class="stat"><span class="stat-val">' . count($channels) . '</span><span class="stat-label">' . htmlspecialchars(ts_t('channels')) . '</span></div>';
     $h .= '<div class="stat"><span class="stat-val">' . htmlspecialchars($uptime) . '</span><span class="stat-label">' . htmlspecialchars(ts_t('uptime')) . '</span></div></div></div>';
 
-    // Erst alle Channels indizieren, DANN die Eltern-Kind-Zuordnung aufbauen:
-    // verwaiste pid-Referenzen (Parent existiert nicht/kommt in der Liste
-    // erst spaeter) werden so zuverlaessig erkannt und an die Root gehaengt,
-    // statt den Channel stillschweigend aus dem Baum zu verlieren.
+    // Index all channels first, THEN build the parent-child mapping: orphaned
+    // pid references (parent doesn't exist / appears later in the list) are
+    // thereby reliably detected and attached to the root, instead of silently
+    // losing the channel from the tree.
     $cmap = [];
     foreach ($channels as $ch) { $cmap[$ch['cid'] ?? '0'] = $ch; }
     $children = [];
@@ -66,18 +67,18 @@ function ts_render_tree(array $config): string {
 }
 
 function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, int $depth, int $maxDepth, array $sgMap, ?string $defaultSgid): string {
-    if ($depth > $maxDepth) return ''; // Schutz gegen Endlos-Rekursion bei zyklischer Channel-Struktur
+    if ($depth > $maxDepth) return ''; // guard against infinite recursion on a cyclic channel structure
     if (!isset($ch[$pid])) return '';
     $h = '';
     foreach ($ch[$pid] as $cid) {
         $c    = $cmap[$cid] ?? [];
         $raw_name = $c['channel_name'] ?? '?';
         $name = ts_unescape($raw_name);
-        // [cspacer] Tag entfernen und als Überschrift behandeln
+        // Strip the [cspacer] tag and treat it as a heading
         $name = preg_replace('/^\[c?spacer[^\]]*\]\s*/i', '', $name);
         if (preg_match('/^\[spacer\d*\][\s_]*$/i', $raw_name) && $cid !== '2') {
             if (!empty($by_ch[$cid])) {
-                // Clients anzeigen aber Channel-Name ausblenden
+                // Show clients but hide the channel name
                 foreach ($by_ch[$cid] as $cl) {
                     $h .= ts_render_client($cl, $depth, $sgMap, $defaultSgid);
                 }
@@ -94,12 +95,12 @@ function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, i
         $h .= '<span class="ch-name">' . htmlspecialchars($name) . '</span>';
         if (!empty($here)) $h .= '<span class="ch-count">' . count($here) . '</span>';
         $h .= '</div>';
-        // strlen (nicht mb_strlen - mbstring ist keine Abhaengigkeit dieses
-        // Projekts) > 1: blendet triviale/Platzhalter-Topics wie "1" aus
-        // (haeufiges Ueberbleibsel aus Channel-Vorlagen/Kopiervorgaengen) - ein
-        // einzelnes Zeichen ist praktisch nie ein absichtlich gesetztes Topic.
-        // Faelschlich nicht gefilterte Ein-Zeichen-Mehrbyte-Topics (z.B. ein
-        // Emoji) sind ein harmloser Grenzfall, kein echtes Problem.
+        // strlen (not mb_strlen - mbstring is not a dependency of this
+        // project) > 1: hides trivial/placeholder topics like "1" (a common
+        // leftover from channel templates/copy operations) - a single
+        // character is practically never an intentionally set topic. A
+        // single-character multi-byte topic (e.g. an emoji) that isn't
+        // filtered by mistake is a harmless edge case, not a real problem.
         if (strlen($topic) > 1) {
             $h .= '<div class="ch-topic" style="padding-left:' . (34 + $indent) . 'px">' . htmlspecialchars($topic) . '</div>';
         }
@@ -112,17 +113,16 @@ function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, i
     return $h;
 }
 
-// Rendert eine einzelne Client-Zeile (Icon, Name, Mute-Icons, Rollen-Badge,
-// Away-Badge) - ausgelagert, weil vorher an zwei Stellen identisch dupliziert.
+// Renders a single client row (icon, name, mute icons, role badge, away
+// badge) - extracted because it used to be duplicated identically in two places.
 function ts_render_client(array $cl, int $depth, array $sgMap, ?string $defaultSgid): string {
     $nick  = ts_unescape($cl['client_nickname'] ?? '?');
     $away  = ($cl['client_away'] ?? '0') === '1';
     $inMuted  = ($cl['client_input_muted'] ?? '0') === '1';
     $outMuted = ($cl['client_output_muted'] ?? '0') === '1';
 
-    // Erste Server-Gruppe, die nicht der Standard-Gruppe entspricht, als
-    // Rollen-Badge (z.B. "Server Admin") - Normal-/Guest-User bekommen so
-    // keinen unnoetigen Badge.
+    // First server group that isn't the default group, shown as the role
+    // badge (e.g. "Server Admin") - Normal/Guest users get no unnecessary badge this way.
     $groupBadge = '';
     foreach (explode(',', $cl['client_servergroups'] ?? '') as $sgid) {
         if ($sgid !== '' && $sgid !== $defaultSgid && isset($sgMap[$sgid])) {

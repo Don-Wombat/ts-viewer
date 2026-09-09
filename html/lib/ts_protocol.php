@@ -1,21 +1,21 @@
 <?php
-// ─── ServerQuery-Protokollsyntax ───────────────────────────────────────────────
-// Reine Text-Syntax des ServerQuery-Protokolls (key=value, durch Leerzeichen
-// getrennt; Listen durch "|" getrennt). Transport- und TS-Versions-unabhängig,
-// gilt identisch fuer TS3/TS5/TS6 und fuer SSH- wie Raw-TCP-Transport.
+// ─── ServerQuery protocol syntax ───────────────────────────────────────────────
+// Plain text syntax of the ServerQuery protocol (key=value, separated by
+// spaces; lists separated by "|"). Transport- and TS-version-independent,
+// applies identically to TS3/TS5/TS6 and to the SSH and raw-TCP transports.
 
 function ts_unescape(string $s): string {
     $s = str_replace(['\\/', '\\s', '\\ ', '\\p', '\\n', '\\r', '\\t'], ['/', ' ', ' ', '|', "\n", "\r", "\t"], $s);
-    // Escapten Backslash zuletzt aufloesen (Gegenstueck zu ts_escape(), das ihn
-    // zuerst escaped) - fehlte im Original, faellt bei Namen mit "\" auf.
+    // Resolve an escaped backslash last (the counterpart to ts_escape(), which
+    // escapes it first) - was missing from the original, breaks on names with "\".
     return str_replace('\\\\', '\\', $s);
 }
 
-// Gegenstück zu ts_unescape(): escaped einen Wert fuer ein ausgehendes
-// ServerQuery-Kommando (z.B. "login <user> <pass>" beim Raw-Transport). Kein
-// Shell-Escaping - das ist reine Protokollsyntax, unabhängig vom Transport.
-// Reihenfolge kritisch: Backslash zuerst ersetzen, sonst werden die durch die
-// folgenden Ersetzungen neu eingefügten Backslashes faelschlich erneut escaped.
+// Counterpart to ts_unescape(): escapes a value for an outgoing ServerQuery
+// command (e.g. "login <user> <pass>" for the raw transport). No shell
+// escaping - this is pure protocol syntax, independent of the transport.
+// Order is critical: escape the backslash first, otherwise the backslashes
+// newly introduced by the following replacements would get escaped again by mistake.
 function ts_escape(string $s): string {
     $s = str_replace('\\', '\\\\', $s);
     $s = str_replace('/', '\\/', $s);

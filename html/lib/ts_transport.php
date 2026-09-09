@@ -1,13 +1,12 @@
 <?php
-// ─── Transport-Abstraktion ──────────────────────────────────────────────────────
-// Ein Transport nimmt ein newline-getrenntes ServerQuery-Kommando-Bundle (OHNE
-// "login" - Auth passiert, falls noetig, transport-intern) entgegen und gibt
-// den rohen, unveraenderten ServerQuery-Response-Text zurueck. Alles, was
-// danach kommt (ts_client.php, Parser, Rendering), bleibt fuer beide
-// Transporte identisch.
+// ─── Transport abstraction ──────────────────────────────────────────────────────
+// A transport takes a newline-separated ServerQuery command bundle (WITHOUT
+// "login" - auth happens, if needed, transport-internally) and returns the
+// raw, unmodified ServerQuery response text. Everything downstream
+// (ts_client.php, parser, rendering) stays identical for both transports.
 
 interface TsQueryTransport {
-    /** @throws TsTransportException bei Connect-/Auth-/IO-Fehlern */
+    /** @throws TsTransportException on connect/auth/IO errors */
     public function query(string $commandBundle): string;
 }
 
@@ -21,9 +20,9 @@ function ts_create_transport(array $config): TsQueryTransport {
         case 'raw':
             return new TsRawTransport($config);
         default:
-            // TsTransportException statt InvalidArgumentException, damit der
-            // bestehende catch(TsTransportException) in ts_client.php das
-            // abfaengt statt eine rohe PHP-Fehlerseite auszuliefern.
-            throw new TsTransportException("Unbekannter TS_TRANSPORT: {$config['transport']}");
+            // TsTransportException instead of InvalidArgumentException, so the
+            // existing catch(TsTransportException) in ts_client.php catches it
+            // instead of a raw PHP error page being served.
+            throw new TsTransportException("Unknown TS_TRANSPORT: {$config['transport']}");
     }
 }

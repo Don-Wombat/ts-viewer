@@ -2,124 +2,123 @@
 
 [![CI](https://github.com/Don-Wombat/ts-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/Don-Wombat/ts-viewer/actions/workflows/ci.yml)
 
-Schlanke, self-hostbare PHP-Webseite, die per ServerQuery live anzeigt, wer
-gerade auf einem TeamSpeak-Server verbunden ist (Channel-Baum inkl. Topic,
-Online-Clients mit Away-/Mute-Status und Rollen-Badge). Ein PHP-Prozess +
-Docker, keine Node-Toolchain, kein Admin-Panel — bewusst nur eine read-only
-Live-Anzeige. UI auf Deutsch und Englisch.
+A lightweight, self-hostable PHP page that shows, live via ServerQuery, who's
+currently connected to a TeamSpeak server (channel tree incl. topic, online
+clients with away/mute status and role badge). One PHP process + Docker, no
+Node toolchain, no admin panel — deliberately just a read-only live view. UI
+available in German and English.
 
-Unterstützt TeamSpeak 3 (ab Serverversion 3.3.0), TeamSpeak 5 und TeamSpeak 6.
+Supports TeamSpeak 3 (from server version 3.3.0), TeamSpeak 5 and TeamSpeak 6.
 
 ## Setup
 
 ```bash
-cp .env.example .env    # ausfüllen
+cp .env.example .env    # fill in
 docker compose -f docker-compose.example.yml up -d --build
 ```
 
-`docker-compose.example.yml` baut standardmäßig aus dem getaggten
-GitHub-Release. Alternativ gibt es fertige Images unter
+`docker-compose.example.yml` builds from the tagged GitHub release by
+default. Alternatively, prebuilt images are available at
 [`ghcr.io/don-wombat/ts-viewer`](https://github.com/Don-Wombat/ts-viewer/pkgs/container/ts-viewer)
-(z.B. `ghcr.io/don-wombat/ts-viewer:v0.1.6.2` oder `:latest`) — dafür in
-`docker-compose.example.yml` einfach `build:` gegen `image:
-ghcr.io/don-wombat/ts-viewer:<tag>` tauschen, spart den lokalen Build.
+(e.g. `ghcr.io/don-wombat/ts-viewer:v0.1.6.2` or `:latest`) — just swap
+`build:` for `image: ghcr.io/don-wombat/ts-viewer:<tag>` in
+`docker-compose.example.yml` to skip the local build.
 
-Auf dem TS-Server wird ein dedizierter ServerQuery-Login empfohlen (nicht der
-Admin-Account) — die App braucht nur Lesezugriff auf `serverinfo`,
-`channellist`, `clientlist` und `servergrouplist` (für den Rollen-Badge, z.B.
+A dedicated, read-only ServerQuery login is recommended on the TS server
+(not the admin account) — the app only needs read access to `serverinfo`,
+`channellist`, `clientlist` and `servergrouplist` (for the role badge, e.g.
 "Server Admin").
 
-Für Uptime-Monitoring: `?health=1` liefert `ok` (Text, HTTP 200) ohne
-TS-Server-Roundtrip — nur ein Check, dass PHP/Apache laufen. Der
-Docker-Container hat zusätzlich einen eingebauten `HEALTHCHECK` auf
-demselben Endpoint.
+For uptime monitoring: `?health=1` returns `ok` (text, HTTP 200) without a TS
+server roundtrip — just a check that PHP/Apache are running. The Docker
+container also has a built-in `HEALTHCHECK` on the same endpoint.
 
-### Transport wählen
+### Choosing a transport
 
-| `TS_TRANSPORT` | Port (Default) | Verschlüsselt | Verfügbar ab |
+| `TS_TRANSPORT` | Port (default) | Encrypted | Available from |
 |---|---|---|---|
-| `ssh` (empfohlen) | 10022 | ja | TS3 ≥ 3.3.0, TS5, TS6 |
-| `raw` | 10011 | **nein** | alle TS3/TS5-Versionen |
+| `ssh` (recommended) | 10022 | yes | TS3 ≥ 3.3.0, TS5, TS6 |
+| `raw` | 10011 | **no** | all TS3/TS5 versions |
 
-- **`ssh`**: Der TS-Server muss SSH-ServerQuery aktiviert haben
-  (`query_protocols=raw,ssh` in der Server-Config). TS6 unterstützt
-  (Stand jetzt) ausschließlich diesen Transport.
-- **`raw`**: klassisches, unverschlüsseltes Telnet-artiges ServerQuery.
-  Standardmäßig bei vielen älteren TS3/TS5-Installationen aktiv, überträgt
-  Passwort und alle Serverdaten aber im Klartext — nur in einem
-  vertrauenswürdigen/lokalen Netz verwenden, sonst `ssh` bevorzugen.
+- **`ssh`**: The TS server must have SSH ServerQuery enabled
+  (`query_protocols=raw,ssh` in the server config). TS6 currently supports
+  only this transport.
+- **`raw`**: classic, unencrypted telnet-like ServerQuery. Enabled by
+  default on many older TS3/TS5 installations, but transmits the password
+  and all server data in plain text — only use it on a trusted/local
+  network, otherwise prefer `ssh`.
 
-TS6-Support ist erwartet funktionsfähig, aber nicht extensiv gegen
-verschiedene TS6-Serverversionen verifiziert.
+TS6 support is expected to work but hasn't been extensively verified across
+different TS6 server versions.
 
-## Konfiguration (Umgebungsvariablen)
+## Configuration (environment variables)
 
-| Variable | Pflicht | Default | Bedeutung |
+| Variable | Required | Default | Meaning |
 |---|---|---|---|
-| `TS_HOST` | ja | – | Hostname/IP des TS-Servers |
-| `TS_USER` | ja | – | ServerQuery-Login-Name |
-| `TS_PASS` | ja | – | ServerQuery-Passwort |
-| `TS_TRANSPORT` | nein | `ssh` | `ssh` \| `raw` |
-| `TS_PORT` | nein | `10022` (ssh) / `10011` (raw) | ServerQuery-Port |
-| `TS_VPORT` | nein | `9987` | virtueller Server (Voice-Port) |
-| `TS_QUERY_NICKNAME` | nein | `TS-Viewer` | Nickname, mit dem die Query-Verbindung im Client-Fenster sichtbar ist |
-| `TS_CONNECT_TIMEOUT` | nein | `5` | Timeout in Sekunden für den Verbindungsaufbau |
-| `TS_CACHE_DIR` | nein | `/var/cache/ts-viewer` | Verzeichnis für Cache/Lock/known_hosts |
-| `TS_CACHE_TTL` | nein | `30` | Cache-Gültigkeit bei Erfolg (Sekunden) |
-| `TS_CACHE_ERROR_TTL` | nein | `10` | Cache-Gültigkeit bei Fehlern (kürzer, verhindert Verbindungssturm) |
-| `TS_TIMEZONE` | nein | `Europe/Berlin` | Zeitzone für die "Aktualisiert um"-Anzeige |
-| `TS_BRAND_TITLE` | nein | `TeamSpeak Viewer` | `<title>` + Header-Text |
-| `TS_BRAND_SUBTITLE` | nein | `TeamSpeak Server` | Untertitel im Header |
-| `TS_CONNECT_URL` | nein | leer (Connect-Button ausgeblendet) | z.B. `ts3server://ts.example.org` |
-| `TS_THEME_CSS_OVERRIDE` | nein | leer | roher CSS-Block, überschreibt die `:root`-Variablen aus `html/assets/style.css` |
-| `TS_DEFAULT_LANG` | nein | `de` | Standardsprache (`de`\|`en`), siehe [Sprache](#sprache) |
+| `TS_HOST` | yes | – | Hostname/IP of the TS server |
+| `TS_USER` | yes | – | ServerQuery login name |
+| `TS_PASS` | yes | – | ServerQuery password |
+| `TS_TRANSPORT` | no | `ssh` | `ssh` \| `raw` |
+| `TS_PORT` | no | `10022` (ssh) / `10011` (raw) | ServerQuery port |
+| `TS_VPORT` | no | `9987` | virtual server (voice port) |
+| `TS_QUERY_NICKNAME` | no | `TS-Viewer` | Nickname under which the query connection is visible in the client window |
+| `TS_CONNECT_TIMEOUT` | no | `5` | Timeout in seconds for establishing the connection |
+| `TS_CACHE_DIR` | no | `/var/cache/ts-viewer` | Directory for cache/lock/known_hosts |
+| `TS_CACHE_TTL` | no | `30` | Cache validity on success (seconds) |
+| `TS_CACHE_ERROR_TTL` | no | `10` | Cache validity on errors (shorter, prevents a connection storm) |
+| `TS_TIMEZONE` | no | `Europe/Berlin` | Timezone for the "updated at" display |
+| `TS_BRAND_TITLE` | no | `TeamSpeak Viewer` | `<title>` + header text |
+| `TS_BRAND_SUBTITLE` | no | `TeamSpeak Server` | Subtitle in the header |
+| `TS_CONNECT_URL` | no | empty (connect button hidden) | e.g. `ts3server://ts.example.org` |
+| `TS_THEME_CSS_OVERRIDE` | no | empty | raw CSS block, overrides the `:root` variables from `html/assets/style.css` |
+| `TS_DEFAULT_LANG` | no | `de` | Default language (`de`\|`en`), see [Language](#language) |
 
-Committet niemals echte Zugangsdaten in dieses Repo (z.B. in einer `.env`).
+Never commit real credentials into this repo (e.g. in a `.env`).
 
-## Sprache
+## Language
 
-Die UI gibt es auf Deutsch und Englisch. Jeder Besucher kann über den
-Umschalter im Header ("DE · EN") umschalten — die Wahl wird per Cookie
-gemerkt. Ohne Auswahl gilt `TS_DEFAULT_LANG` (Default `de`). Neue UI-Strings
-werden in `html/lib/i18n.php` gepflegt, siehe [CONTRIBUTING.md](CONTRIBUTING.md).
+The UI is available in German and English. Every visitor can switch via the
+header toggle ("DE · EN") — the choice is remembered via a cookie. Without a
+selection, `TS_DEFAULT_LANG` applies (default `de`). New UI strings are
+maintained in `html/lib/i18n.php`, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Sicherheitshinweise
+## Security notes
 
-- Dedizierten, leseberechtigten ServerQuery-Login statt Admin-Account nutzen.
-- `ssh`-Transport bevorzugen; `raw` überträgt Passwort und Serverdaten im
-  Klartext.
-- Beim `ssh`-Transport wird der Host-Key beim ersten Connect gepinnt
-  (`StrictHostKeyChecking=accept-new`) und in `TS_CACHE_DIR/known_hosts`
-  abgelegt — ändert sich der Key danach (z.B. durch einen MITM), schlägt die
-  Verbindung fehl statt kommentarlos durchzulaufen.
-- Cache, Lock-Datei und `known_hosts` liegen in einem dedizierten, nicht
-  world-writable Verzeichnis (`0700`, `www-data`) statt in `/tmp`. Der
-  Container-Entrypoint setzt diese Rechte bei jedem Start neu (nicht nur beim
-  Image-Build), da ein Volume oder Bind-Mount an `TS_CACHE_DIR` die im Image
-  gesetzten Rechte sonst überschreiben würde.
-- HTTP-Security-Header (`X-Content-Type-Options: nosniff`,
+- Use a dedicated, read-only ServerQuery login instead of the admin account.
+- Prefer the `ssh` transport; `raw` transmits the password and server data
+  in plain text.
+- With the `ssh` transport, the host key is pinned on first connect
+  (`StrictHostKeyChecking=accept-new`) and stored in
+  `TS_CACHE_DIR/known_hosts` — if the key changes afterwards (e.g. due to a
+  MITM), the connection fails instead of silently going through.
+- Cache, lock file and `known_hosts` live in a dedicated, non-world-writable
+  directory (`0700`, `www-data`) instead of `/tmp`. The container entrypoint
+  resets these permissions on every start (not just at image build time),
+  since a volume or bind mount at `TS_CACHE_DIR` would otherwise override
+  the permissions set in the image.
+- HTTP security headers (`X-Content-Type-Options: nosniff`,
   `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`,
-  `Content-Security-Policy: frame-ancestors 'none'`) auf jeder Antwort,
-  auch `?ajax=1`/`?health=1`.
-- Alle Werte aus dem TS-Server (Channel-/Nicknamen, Topics, Gruppennamen)
-  laufen vor der Ausgabe durch `htmlspecialchars()` — auch Rollen-Badges und
-  der Channel-Topic (neu seit v0.1.6).
+  `Content-Security-Policy: frame-ancestors 'none'`) on every response,
+  including `?ajax=1`/`?health=1`.
+- All values coming from the TS server (channel/nicknames, topics, group
+  names) pass through `htmlspecialchars()` before output — including role
+  badges and the channel topic (new since v0.1.6).
 
-## Entwicklung
+## Development
 
 ```bash
-php -l html/index.php html/config.php html/lib/*.php bin/*.php   # Syntax-Check
-php bin/selftest_parser.php                                        # Protokoll-Selbsttest
-php bin/test_raw_transport.php                                     # Transport-Integrationstest gegen Mock-Socket
+php -l html/index.php html/config.php html/lib/*.php bin/*.php   # syntax check
+php bin/selftest_parser.php                                        # protocol self-test
+php bin/test_raw_transport.php                                     # transport integration test against a mock socket
 ```
 
-Siehe [CONTRIBUTING.md](CONTRIBUTING.md) für mehr Details (Konventionen,
-i18n-Strings, Sicherheitsmeldungen).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details (conventions, i18n
+strings, security disclosures).
 
 ## Changelog
 
-Siehe [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md).
 
-## Lizenz
+## License
 
-MIT, siehe [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

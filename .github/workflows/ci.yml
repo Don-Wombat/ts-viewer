@@ -12,28 +12,28 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-      - name: PHP Syntax-Check
+      - name: PHP syntax check
         run: |
           for f in html/index.php html/config.php html/lib/*.php bin/*.php; do
             php -l "$f"
           done
-      - name: Protokoll-Selbsttest
+      - name: Protocol self-test
         run: php bin/selftest_parser.php
-      - name: Transport-Integrationstest (gegen Mock-ServerQuery-Socket)
+      - name: Transport integration test (against mock ServerQuery socket)
         run: php bin/test_raw_transport.php
 
   docker-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Docker Image bauen
+      - name: Build Docker image
         run: docker build -t ts-viewer:ci .
-      - name: App-Dateien im Image pruefen
-        # Faengt genau die Bug-Klasse "Dockerfile baut erfolgreich, kopiert die
-        # App aber nicht ins Image" - ein reiner "docker build"-Erfolg allein
-        # haette das nicht erkannt.
+      - name: Verify app files are in the image
+        # Catches exactly the bug class "Dockerfile builds successfully but
+        # doesn't copy the app into the image" - a plain "docker build"
+        # success alone wouldn't have caught that.
         run: docker run --rm ts-viewer:ci test -f /var/www/html/index.php
-      - name: Container starten und HTTP-Smoke-Test
+      - name: Start container and run an HTTP smoke test
         run: |
           docker run -d --name ts-viewer-ci -p 8080:80 ts-viewer:ci
           for i in $(seq 1 10); do
@@ -46,8 +46,10 @@ jobs:
           docker logs ts-viewer-ci
           docker rm -f ts-viewer-ci
           [ "$STATUS" = "200" ]
+          # The app defaults to German UI text (TS_DEFAULT_LANG=de) unless
+          # configured otherwise, so this checks the actual (German) error message.
           grep -q "nicht konfiguriert" /tmp/body.html
-      - name: Health-Endpoint pruefen
+      - name: Check the health endpoint
         run: |
           docker run -d --name ts-viewer-ci-health -p 8081:80 ts-viewer:ci
           for i in $(seq 1 10); do

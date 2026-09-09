@@ -1,8 +1,8 @@
 name: Publish Docker image
 
-# Baut und veroeffentlicht das Image auf ghcr.io bei jedem Versions-Tag
-# (v0.1.6, v0.1.6.2, ...), plus manuell auslösbar (workflow_dispatch) fuer
-# Tags, die schon vor diesem Workflow existierten.
+# Builds and publishes the image to ghcr.io on every version tag (v0.1.6,
+# v0.1.6.2, ...), plus it can be triggered manually (workflow_dispatch) for
+# tags that already existed before this workflow.
 on:
   push:
     tags:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Git-Tag, das gepublished werden soll (z.B. v0.1.6.2)"
+        description: "Git tag to publish (e.g. v0.1.6.2)"
         required: true
 
 permissions:
@@ -25,22 +25,22 @@ jobs:
         with:
           ref: ${{ github.event.inputs.tag || github.ref_name }}
 
-      - name: Repo-Namen in Kleinbuchstaben (ghcr.io verlangt lowercase)
+      - name: Lowercase the repository name (ghcr.io requires lowercase)
         id: repo
         run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
-      - name: Tag-Namen ermitteln
+      - name: Determine the tag name
         id: tagname
         run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
-      - name: Login bei ghcr.io
+      - name: Log in to ghcr.io
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build + Push
+      - name: Build + push
         uses: docker/build-push-action@v6
         with:
           context: .

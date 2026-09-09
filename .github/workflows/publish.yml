@@ -21,30 +21,35 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.inputs.tag || github.ref_name }}
 
-      - name: Lowercase the repository name (ghcr.io requires lowercase)
-        id: repo
-        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
-
-      - name: Determine the tag name
-        id: tagname
-        run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+      # Untrusted-ish input (workflow_dispatch is user-supplied) goes through
+      # env: instead of being spliced directly into the run: script via
+      # ${{ }} - avoids the classic GitHub Actions script-injection pattern.
+      - name: Determine tag and lowercase repo name (ghcr.io requires lowercase)
+        id: vars
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "tag=${INPUT_TAG:-$REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "name=$(echo "$REPO" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Log in to ghcr.io
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build + push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}:${{ steps.tagname.outputs.tag }}
-            ghcr.io/${{ steps.repo.outputs.name }}:latest
+            ghcr.io/${{ steps.vars.outputs.name }}:${{ steps.vars.outputs.tag }}
+            ghcr.io/${{ steps.vars.outputs.name }}:latest

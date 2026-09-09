@@ -4,11 +4,28 @@
 // spaces; lists separated by "|"). Transport- and TS-version-independent,
 // applies identically to TS3/TS5/TS6 and to the SSH and raw-TCP transports.
 
+// Single left-to-right scan instead of multiple str_replace() passes.
+// A multi-pass approach (tried previously) is unsafe here: an escaped
+// backslash is itself two characters ("\\"), and if the character right
+// after that pair happens to be one of s/p/n/r/t or a literal "/" or space,
+// an earlier str_replace() pass looking for e.g. "\s" can match across the
+// boundary (the second "\" of the pair + the following real character) and
+// corrupt the text - e.g. the wire form of "back\slash" (one real backslash)
+// decoded to "back lash" instead. A single pass that consumes exactly one
+// escape sequence at a time can't have this cross-boundary ambiguity.
 function ts_unescape(string $s): string {
-    $s = str_replace(['\\/', '\\s', '\\ ', '\\p', '\\n', '\\r', '\\t'], ['/', ' ', ' ', '|', "\n", "\r", "\t"], $s);
-    // Resolve an escaped backslash last (the counterpart to ts_escape(), which
-    // escapes it first) - was missing from the original, breaks on names with "\".
-    return str_replace('\\\\', '\\', $s);
+    $map = ['\\' => '\\', '/' => '/', 's' => ' ', ' ' => ' ', 'p' => '|', 'n' => "\n", 'r' => "\r", 't' => "\t"];
+    $out = '';
+    $len = strlen($s);
+    for ($i = 0; $i < $len; $i++) {
+        if ($s[$i] === '\\' && $i + 1 < $len && isset($map[$s[$i + 1]])) {
+            $out .= $map[$s[$i + 1]];
+            $i++;
+        } else {
+            $out .= $s[$i];
+        }
+    }
+    return $out;
 }
 
 // Counterpart to ts_unescape(): escapes a value for an outgoing ServerQuery

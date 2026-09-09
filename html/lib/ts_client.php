@@ -48,10 +48,19 @@ function ts_fetch_from_server(array $config): array {
     foreach (explode("\n", $out) as $line) {
         $line = trim($line);
         if ($line === '' || strpos($line, 'error ') === 0 || strpos($line, 'Welcome') === 0) continue;
-        if (strpos($line, 'virtualserver_name=') !== false) { $serverinfo = $line; continue; }
-        if (strpos($line, 'channel_name=') !== false) { $channellist = $line; continue; }
-        if (strpos($line, 'client_nickname=') !== false) { $clientlist = $line; continue; }
-        if (strpos($line, 'sgid=') !== false) { $servergrouplist = $line; continue; }
+        // Anchored to "start of line or preceded by a space" instead of a
+        // plain substring search: a client nickname or channel name is
+        // attacker-controlled (any TS user can set their own nickname) and
+        // could contain e.g. "channel_name=" as literal text, which would
+        // otherwise misclassify a whole clientlist line as the channellist
+        // response. The anchor is safe because ServerQuery always escapes a
+        // literal space in a value to "\s" - a real, unescaped space in the
+        // raw response line can therefore only be an actual field separator
+        // inserted by the server, never attacker-supplied content.
+        if (preg_match('/(?:^|\s)virtualserver_name=/', $line)) { $serverinfo = $line; continue; }
+        if (preg_match('/(?:^|\s)channel_name=/', $line)) { $channellist = $line; continue; }
+        if (preg_match('/(?:^|\s)client_nickname=/', $line)) { $clientlist = $line; continue; }
+        if (preg_match('/(?:^|\s)sgid=/', $line)) { $servergrouplist = $line; continue; }
     }
 
     return [

@@ -25,7 +25,10 @@ function ts_render_tree(array $config): string {
     // Server group ID -> name, for the role badge (e.g. "Server Admin").
     $sgMap = [];
     foreach ($data['servergrouplist'] ?? [] as $sg) {
-        if (isset($sg['sgid'])) $sgMap[$sg['sgid']] = ts_unescape($sg['name'] ?? '');
+        // Already unescaped by ts_parse_item() (called from ts_parse_list())
+        // when the raw response was parsed - unescaping again here would
+        // corrupt values containing a literal backslash.
+        if (isset($sg['sgid'])) $sgMap[$sg['sgid']] = $sg['name'] ?? '';
     }
     $defaultSgid = $info['virtualserver_default_server_group'] ?? null;
 
@@ -34,9 +37,18 @@ function ts_render_tree(array $config): string {
 
     $online  = count($clients);
     $max     = $info['virtualserver_maxclients'] ?? '?';
-    $name    = ts_unescape($info['virtualserver_name'] ?? 'TeamSpeak');
+    // Already unescaped by ts_parse_single() - see the note on $sgMap above.
+    $name    = $info['virtualserver_name'] ?? 'TeamSpeak';
     $uptime  = isset($info['virtualserver_uptime']) ? ts_uptime((int)$info['virtualserver_uptime']) : '—';
-    $updated = (new DateTime('@' . $data['updated']))->setTimezone(new DateTimeZone($config['timezone']))->format('H:i:s');
+    try {
+        $tz = new DateTimeZone($config['timezone']);
+    } catch (Exception $e) {
+        // An invalid TS_TIMEZONE would otherwise throw here uncaught and
+        // take down every render - fall back to UTC and keep the page working.
+        error_log('ts-viewer: invalid TS_TIMEZONE "' . $config['timezone'] . '", falling back to UTC');
+        $tz = new DateTimeZone('UTC');
+    }
+    $updated = (new DateTime('@' . $data['updated']))->setTimezone($tz)->format('H:i:s');
 
     $h  = '<div class="server-card">';
     $h .= '<div class="server-header"><div class="server-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>';
@@ -66,14 +78,20 @@ function ts_render_tree(array $config): string {
     return $h;
 }
 
-function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, int $depth, int $maxDepth, array $sgMap, ?string $defaultSgid): string {
-    if ($depth > $maxDepth) return ''; // guard against infinite recursion on a cyclic channel structure
+function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, int $depth, int $maxDepth, array $sgMap, ?string $defaultSgid, int $recDepth = 0): string {
+    // $recDepth guards recursion itself and always increments, even for
+    // spacer channels (which intentionally keep $depth - the visual
+    // indentation - unchanged). Using $depth alone for the guard let a chain
+    // of nested spacer channels recurse without bound, since $depth never
+    // grew on that path.
+    if ($recDepth > $maxDepth) return '';
     if (!isset($ch[$pid])) return '';
     $h = '';
     foreach ($ch[$pid] as $cid) {
         $c    = $cmap[$cid] ?? [];
         $raw_name = $c['channel_name'] ?? '?';
-        $name = ts_unescape($raw_name);
+        // Already unescaped by ts_parse_item() - see the note on $sgMap in ts_render_tree().
+        $name = $raw_name;
         // Strip the [cspacer] tag and treat it as a heading
         $name = preg_replace('/^\[c?spacer[^\]]*\]\s*/i', '', $name);
         if (preg_match('/^\[spacer\d*\][\s_]*$/i', $raw_name) && $cid !== '2') {
@@ -83,13 +101,13 @@ function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, i
                     $h .= ts_render_client($cl, $depth, $sgMap, $defaultSgid);
                 }
             }
-            $h .= ts_render_channels($ch, $cmap, $by_ch, $cid, $depth, $maxDepth, $sgMap, $defaultSgid);
+            $h .= ts_render_channels($ch, $cmap, $by_ch, $cid, $depth, $maxDepth, $sgMap, $defaultSgid, $recDepth + 1);
             continue;
         }
         $here = $by_ch[$cid] ?? [];
         $active = !empty($here) ? ' active' : '';
         $indent = $depth * 16;
-        $topic = trim(ts_unescape($c['channel_topic'] ?? ''));
+        $topic = trim($c['channel_topic'] ?? '');
         $h .= '<div class="channel' . $active . '" style="padding-left:' . (12 + $indent) . 'px">';
         $h .= '<div class="ch-row"><span class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>';
         $h .= '<span class="ch-name">' . htmlspecialchars($name) . '</span>';
@@ -107,7 +125,7 @@ function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, i
         foreach ($here as $cl) {
             $h .= ts_render_client($cl, $depth, $sgMap, $defaultSgid);
         }
-        $h .= ts_render_channels($ch, $cmap, $by_ch, $cid, $depth + 1, $maxDepth, $sgMap, $defaultSgid);
+        $h .= ts_render_channels($ch, $cmap, $by_ch, $cid, $depth + 1, $maxDepth, $sgMap, $defaultSgid, $recDepth + 1);
         $h .= '</div>';
     }
     return $h;
@@ -116,7 +134,8 @@ function ts_render_channels(array $ch, array $cmap, array $by_ch, string $pid, i
 // Renders a single client row (icon, name, mute icons, role badge, away
 // badge) - extracted because it used to be duplicated identically in two places.
 function ts_render_client(array $cl, int $depth, array $sgMap, ?string $defaultSgid): string {
-    $nick  = ts_unescape($cl['client_nickname'] ?? '?');
+    // Already unescaped by ts_parse_item() - see the note on $sgMap in ts_render_tree().
+    $nick  = $cl['client_nickname'] ?? '?';
     $away  = ($cl['client_away'] ?? '0') === '1';
     $inMuted  = ($cl['client_input_muted'] ?? '0') === '1';
     $outMuted = ($cl['client_output_muted'] ?? '0') === '1';

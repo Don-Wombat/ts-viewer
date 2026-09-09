@@ -10,6 +10,21 @@ available in German and English.
 
 Supports TeamSpeak 3 (from server version 3.3.0), TeamSpeak 5 and TeamSpeak 6.
 
+<img src="docs/screenshot.png" alt="Screenshot of ts-viewer showing a channel tree with online clients, mute icons and a role badge" width="420">
+
+*(Demo data — not a real server.)*
+
+## Features
+
+- Live channel tree with online client count, away/mute status and a role
+  badge (e.g. "Server Admin")
+- Channel topics
+- German/English UI, switchable per visitor
+- Configurable branding (title, subtitle, theme colors, connect button)
+- SSH or unencrypted raw ServerQuery transport — works with TS3, TS5 and TS6
+- `?health=1` endpoint + Docker `HEALTHCHECK` for uptime monitoring
+- Ships as a single Docker image, no build tooling or database required
+
 ## Setup
 
 ```bash

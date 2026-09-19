@@ -10,7 +10,11 @@ if ($port <= 0) {
     exit(1);
 }
 
-$server = stream_socket_server("tcp://127.0.0.1:$port", $errno, $errstr);
+// 0.0.0.0 instead of 127.0.0.1: still reachable via 127.0.0.1 for
+// bin/test_raw_transport.php's same-host subprocess use, but also reachable
+// from a sibling container (a different network namespace) for
+// bin/e2e_playwright.mjs's full browser-based check.
+$server = stream_socket_server("tcp://0.0.0.0:$port", $errno, $errstr);
 if (!$server) {
     fwrite(STDERR, "server failed: $errstr\n");
     exit(1);

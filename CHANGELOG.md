@@ -2,6 +2,26 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- `bin/e2e_playwright.mjs`: browser-based end-to-end test with Playwright.
+  Loads the actual rendered page against a running container backed by
+  `bin/mock_serverquery.php` and checks the DOM, the language switch, the
+  security headers and the error state — closes the gap left by the
+  existing PHP-only tests, which never render or execute anything in a
+  browser. Wired into CI as a new `browser-e2e` job in `ci.yml`.
+
+### Changed
+- `bin/mock_serverquery.php` now binds `0.0.0.0` instead of `127.0.0.1`, so
+  it's reachable from a sibling Docker container (needed for the new E2E
+  test) as well as the existing same-host subprocess use in
+  `bin/test_raw_transport.php`.
+- `bin/test_raw_transport.php`'s inline copy of the response-line classifier
+  was still using the old unanchored substring match, missed when
+  `ts_client.php`'s version was fixed for v0.1.7 — now consistent with the
+  anchored regex.
+
 ## [v0.1.7] – Whole-repo review + CI/supply-chain hardening
 
 ### Added

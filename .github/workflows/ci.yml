@@ -63,3 +63,65 @@ jobs:
           docker logs ts-viewer-ci-health
           docker rm -f ts-viewer-ci-health
           [ "$BODY" = "ok" ]
+
+  browser-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: "8.3"
+      - name: Build Docker image
+        run: docker build -t ts-viewer:ci .
+      - name: Start the mock ServerQuery server
+        # Same fixture bin/test_raw_transport.php uses, just reached over the
+        # network from inside the ts-viewer container instead of via a
+        # subprocess pipe - see the note on the 0.0.0.0 bind in the script.
+        run: |
+          php bin/mock_serverquery.php 10011 ok > /tmp/mock.log 2>&1 &
+          for i in $(seq 1 10); do
+            grep -q listening /tmp/mock.log && break
+            sleep 1
+          done
+          cat /tmp/mock.log
+      - name: Start ts-viewer against the mock (happy path)
+        # --network host: simplest way for the container to reach the mock
+        # listening on the runner's own 127.0.0.1.
+        run: |
+          docker run -d --name ts-viewer-e2e --network host \
+            -e TS_HOST=127.0.0.1 -e TS_TRANSPORT=raw -e TS_PORT=10011 \
+            -e TS_USER=testuser -e TS_PASS=testpass \
+            -e TS_CACHE_TTL=600 -e TS_CACHE_ERROR_TTL=600 \
+            ts-viewer:ci
+          for i in $(seq 1 10); do
+            curl -sf http://127.0.0.1/?health=1 > /dev/null && break
+            sleep 1
+          done
+      - name: Start a second instance pointed at an unreachable host (error state)
+        # 203.0.113.0/24 is the TEST-NET-3 documentation range (RFC 5737) -
+        # guaranteed unroutable, so the connection reliably times out instead
+        # of depending on some real host being down.
+        run: |
+          docker run -d --name ts-viewer-e2e-error -p 8082:80 \
+            -e TS_HOST=203.0.113.1 -e TS_TRANSPORT=raw -e TS_CONNECT_TIMEOUT=1 \
+            -e TS_USER=x -e TS_PASS=x \
+            ts-viewer:ci
+      - name: Install Playwright (Chromium only)
+        run: |
+          npm install --no-save playwright@1.55.1
+          npx playwright install --with-deps chromium
+      - name: Run the Playwright E2E check
+        env:
+          TS_VIEWER_URL: http://127.0.0.1/
+          TS_VIEWER_ERROR_URL: http://127.0.0.1:8082/
+          E2E_SCREENSHOT_DIR: /tmp/e2e-screenshots
+        run: node bin/e2e_playwright.mjs
+      - name: Upload E2E screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: e2e-screenshots
+          path: /tmp/e2e-screenshots
+      - name: Clean up
+        if: always()
+        run: docker rm -f ts-viewer-e2e ts-viewer-e2e-error

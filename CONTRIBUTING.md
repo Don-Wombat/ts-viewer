@@ -63,8 +63,37 @@ server, testing against it (not just the mock) is even better — see the
 "Raw" row in the transport table in the README for how to enable raw
 ServerQuery on a test server.
 
-CI (`.github/workflows/ci.yml`) runs the same checks plus a real `docker
-build` + HTTP smoke test on every push/PR.
+### Browser E2E test (`bin/e2e_playwright.mjs`)
+
+The tests above never render or execute anything in a real browser — they
+check the PHP output/parsing directly. `bin/e2e_playwright.mjs` closes that
+gap with [Playwright](https://playwright.dev/): it loads the actual page
+against a running container backed by `bin/mock_serverquery.php`, and checks
+the rendered DOM, the language switch, the security headers and the error
+state (server unreachable), plus that the browser console stays free of
+errors. Requires a running instance and Node with the `playwright` package
+installed (not a dependency of the PHP app itself — only needed for this
+check):
+
+```bash
+docker build -t ts-viewer:local .
+php bin/mock_serverquery.php 10011 ok &                 # one connection, then exits
+docker run -d --name ts-viewer-local --network host \
+  -e TS_HOST=127.0.0.1 -e TS_TRANSPORT=raw -e TS_PORT=10011 \
+  -e TS_USER=x -e TS_PASS=x -e TS_CACHE_TTL=600 ts-viewer:local
+
+npm install --no-save playwright && npx playwright install --with-deps chromium
+TS_VIEWER_URL=http://127.0.0.1/ node bin/e2e_playwright.mjs
+
+docker rm -f ts-viewer-local
+```
+
+If you're changing anything under `html/` that affects what a visitor sees
+(markup, CSS, i18n strings, the error/health states), please also update this
+script so the new behavior has coverage.
+
+CI (`.github/workflows/ci.yml`) runs the PHP checks, a real `docker build` +
+HTTP smoke test, and the Playwright E2E check above, on every push/PR.
 
 ## Adding a UI string
 

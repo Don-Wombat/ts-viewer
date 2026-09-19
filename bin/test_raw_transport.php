@@ -68,10 +68,10 @@ try {
     foreach (explode("\n", $out) as $line) {
         $line = trim($line);
         if ($line === '' || strpos($line, 'error ') === 0 || strpos($line, 'Welcome') === 0) continue;
-        if (strpos($line, 'virtualserver_name=') !== false) { $serverinfo = $line; continue; }
-        if (strpos($line, 'channel_name=') !== false) { $channellist = $line; continue; }
-        if (strpos($line, 'client_nickname=') !== false) { $clientlist = $line; continue; }
-        if (strpos($line, 'sgid=') !== false) { $servergrouplist = $line; continue; }
+        if (preg_match('/(?:^|\s)virtualserver_name=/', $line)) { $serverinfo = $line; continue; }
+        if (preg_match('/(?:^|\s)channel_name=/', $line)) { $channellist = $line; continue; }
+        if (preg_match('/(?:^|\s)client_nickname=/', $line)) { $clientlist = $line; continue; }
+        if (preg_match('/(?:^|\s)sgid=/', $line)) { $servergrouplist = $line; continue; }
     }
     $info = ts_parse_single($serverinfo);
     $channels = ts_parse_list($channellist);

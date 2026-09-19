@@ -2,3 +2,6 @@
 *.log
 bin/deploy*
 BACKLOG.local.md
+node_modules/
+.playwright-mcp/
+e2e-screenshots/

@@ -1,6 +1,6 @@
 # Pinned to a digest for reproducible builds (currently php:8.3-apache).
 # Dependabot (.github/dependabot.yml) proposes PRs when this changes.
-FROM php:8.3-apache@sha256:060ed9c0f6e4bbe4f8b25a34ca1ec596b96d8f4011cf7ee7eb6b7eecf01cb74f
+FROM php:8.4-apache@sha256:d54a6bdfaaa4b516264617b2ac6a3692f23f29510278e02494154f8e260e9ce3
 RUN apt-get update && apt-get install -y sshpass openssh-client && rm -rf /var/lib/apt/lists/*
 COPY html/ /var/www/html/
 

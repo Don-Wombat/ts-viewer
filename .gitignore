@@ -5,3 +5,7 @@ BACKLOG.local.md
 node_modules/
 .playwright-mcp/
 e2e-screenshots/
+
+# Private deployment working copy - its own separate (private) GitHub repo,
+# must never end up inside this public one.
+/salzwerk-viewer/

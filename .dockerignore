@@ -3,3 +3,4 @@
 bin/deploy*
 BACKLOG.local.md
 *.log
+salzwerk-viewer/

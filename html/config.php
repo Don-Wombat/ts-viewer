@@ -39,12 +39,57 @@ function ts_load_config(): array {
 
         'brand_title'        => ts_env('TS_BRAND_TITLE', 'TeamSpeak Viewer'),
         'brand_subtitle'     => ts_env('TS_BRAND_SUBTITLE', 'TeamSpeak Server'),
+        'founded_year'       => ts_env('TS_FOUNDED_YEAR'), // empty = not shown in the hero
         'connect_url'        => ts_env('TS_CONNECT_URL'), // empty = connect button hidden
         'theme_css_override' => ts_env('TS_THEME_CSS_OVERRIDE'),
 
         // Default language if neither ?lang= nor the ts_lang cookie is set.
         // Default "de" doesn't change behavior for existing deployments.
         'default_lang'       => ts_env('TS_DEFAULT_LANG', 'de'),
+
+        // cid of a channel whose description holds quotes (one per
+        // paragraph, separated by a blank line) - shown next to the tree.
+        // Empty = feature off (default single-column layout, no extra
+        // command in the ServerQuery bundle). A cid, not a name: resolving
+        // by name would need its own extra connection (channellist has no
+        // -description flag), and two connections back-to-back in the same
+        // request tripped this server's flood protection in testing.
+        'quote_channel_id'   => ts_env('TS_QUOTE_CHANNEL_ID'),
+
+        // Online-time leaderboard, shown below the quote box. Empty = off
+        // (no leaderboard rendered, and - checked directly via getenv() in
+        // docker/entrypoint.sh, not through this array - the background
+        // poller in cli/track_online_time.php doesn't start at all). The
+        // poller writes cache_dir/online_time.json independently of any web
+        // request; render.php just reads it.
+        'track_online_time'  => ts_env('TS_TRACK_ONLINE_TIME'),
+
+        // Comma-separated exact channel names to hide from the tree entirely
+        // (channel + its clients/subchannels). Matched against the effective
+        // display name - a spacer's label (e.g. "[cspacer]Special Channels"
+        // matches "Special Channels"), or the raw name for a normal channel.
+        // Hiding a channel also swallows one immediately-following plain
+        // spacer/divider, so a divider left dangling only because of the
+        // channel above it being hidden doesn't linger on its own. Empty =
+        // off (no filtering, matches previous behavior).
+        'hidden_channels'    => array_values(array_filter(array_map('trim', explode(',', ts_env('TS_HIDDEN_CHANNELS', '') ?? '')))),
+
+        // Soundboard: a separate page listing short clips from TS_SOUNDS_DIR
+        // (a directory mounted outside the web root, like TS_CACHE_DIR - see
+        // docker-compose.example.yml - so there's no static route that could
+        // ever serve a clip directly, only sound.php after the auth check
+        // below). Requires BOTH to be set - a configured directory with no
+        // password would mean a public soundboard, which contradicts the
+        // whole point of gating it; treat that as off, same as either alone
+        // being unset.
+        'sounds_dir'         => ts_env('TS_SOUNDS_DIR'),
+        // Deliberately a plain env var, like TS_PASS above - this project's
+        // whole config model is "secrets live in .env, gitignored, on a
+        // trusted host" (see config.php's own top-of-file note), so hashing
+        // this one value into another form on disk wouldn't raise the bar;
+        // the actual protection is the signed session cookie in lib/auth.php,
+        // never the password itself, sitting in a browser-visible place.
+        'sounds_password'    => ts_env('TS_SOUNDBOARD_PASSWORD'),
     ];
 
     $config['cache_file']       = $config['cache_dir'] . '/ts_cache.json';

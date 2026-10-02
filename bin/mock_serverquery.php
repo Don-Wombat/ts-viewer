@@ -58,8 +58,14 @@ fwrite(STDERR, "mock: got bundle:\n$rest");
 
 fwrite($conn, "virtualserver_name=MockServer virtualserver_maxclients=32 virtualserver_uptime=100 virtualserver_default_server_group=8\n");
 fwrite($conn, "cid=1 pid=0 channel_name=Lobby channel_topic=Welcome\n");
-fwrite($conn, "clid=1 cid=1 client_nickname=Alice client_type=0 client_away=0 client_input_muted=1 client_output_muted=0 client_servergroups=6\n");
+fwrite($conn, "clid=1 cid=1 client_database_id=1 client_nickname=Alice client_type=0 client_away=0 client_input_muted=1 client_output_muted=0 client_servergroups=6\n");
 fwrite($conn, "sgid=6 name=Server\\sAdmin|sgid=8 name=Guest\n");
+// Only if the client actually asked for it (mirrors a real server, which
+// wouldn't emit this unprompted) - lets the "no quote_channel_id configured"
+// tests stay unaffected while still covering the quote-box path when asked.
+if (str_contains($rest, 'channelinfo')) {
+    fwrite($conn, "pid=0 channel_name=Zitatbox channel_topic channel_description=\"Test\\squote\"\\s-\\sMock\\s2020\\n\\n\"Second\\squote\"\\s-\\s2021\n");
+}
 fwrite($conn, "error id=0 msg=ok\n");
 fclose($conn);
 fclose($server);

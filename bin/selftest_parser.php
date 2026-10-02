@@ -3,6 +3,7 @@
 // functions (no PHPUnit needed for a project this size).
 // Usage: php bin/selftest_parser.php
 require __DIR__ . '/../html/lib/ts_protocol.php';
+require __DIR__ . '/../html/lib/ts_online_time.php';
 
 $failures = 0;
 
@@ -70,6 +71,79 @@ check('ts_parse_single skips error line', ts_parse_single("error id=0 msg=ok\nvi
 check('ts_uptime days', ts_uptime(90000), '1d 1h');
 check('ts_uptime hours', ts_uptime(3700), '1h 1m');
 check('ts_uptime minutes', ts_uptime(120), '2m');
+
+// --- Online-time leaderboard: pure merge/sort logic (no network needed) ---
+
+$data = ts_online_time_apply([], [
+    ['client_database_id' => '5', 'client_nickname' => 'Alice'],
+    ['client_database_id' => '7', 'client_nickname' => 'Bob'],
+], 60);
+check('online-time: first poll credits both clients 60s', $data, [
+    '5' => ['nickname' => 'Alice', 'seconds' => 60],
+    '7' => ['nickname' => 'Bob', 'seconds' => 60],
+]);
+
+$data = ts_online_time_apply($data, [
+    ['client_database_id' => '5', 'client_nickname' => 'Alice'],
+], 60);
+check('online-time: second poll only credits the still-online client', $data, [
+    '5' => ['nickname' => 'Alice', 'seconds' => 120],
+    '7' => ['nickname' => 'Bob', 'seconds' => 60],
+]);
+
+$data = ts_online_time_apply($data, [
+    ['client_database_id' => '5', 'client_nickname' => 'AliceRenamed'],
+], 60);
+check('online-time: a rename overwrites the stored nickname', $data['5']['nickname'], 'AliceRenamed');
+check('online-time: seconds keep accumulating across renames', $data['5']['seconds'], 180);
+
+check('online-time: a client with no database id is skipped', ts_online_time_apply([], [
+    ['client_nickname' => 'NoId'],
+], 60), []);
+
+// Alias merge (e.g. the same person's mobile + desktop client, two
+// different TS identities): both the write path (apply, on the next poll)
+// and the read path (top, for display) must fold the configured id into its
+// target. A synthetic $aliases table is passed explicitly here instead of
+// relying on TS_ONLINE_TIME_ALIASES (empty by default - see its comment in
+// ts_online_time.php) so this is testable without a real seeded duplicate.
+$testAliases = ['8' => '9'];
+check('online-time apply: aliased id is merged into its target on write', ts_online_time_apply([
+    '8' => ['nickname' => 'Bob', 'seconds' => 60],
+    '9' => ['nickname' => 'Bob', 'seconds' => 1680],
+], [
+    ['client_database_id' => '9', 'client_nickname' => 'Bob'],
+], 60, $testAliases), [
+    '9' => ['nickname' => 'Bob', 'seconds' => 1800],
+]);
+
+check('online-time apply: a poll crediting the aliased id itself still lands on the target', ts_online_time_apply([
+    '8' => ['nickname' => 'Bob', 'seconds' => 60],
+    '9' => ['nickname' => 'Bob', 'seconds' => 1680],
+], [
+    ['client_database_id' => '8', 'client_nickname' => 'Bob'],
+], 60, $testAliases), [
+    // 60+1680 merged first, then +60 for this poll's interval.
+    '9' => ['nickname' => 'Bob', 'seconds' => 1800],
+]);
+
+check('online-time top: aliased id is merged into its target for display', ts_online_time_top([
+    '8' => ['nickname' => 'Bob', 'seconds' => 60],
+    '9' => ['nickname' => 'Bob', 'seconds' => 1680],
+    '3' => ['nickname' => 'Alice', 'seconds' => 51720],
+], 5, $testAliases), [
+    ['nickname' => 'Alice', 'seconds' => 51720],
+    ['nickname' => 'Bob', 'seconds' => 1740],
+]);
+
+check('online-time top: sorted descending and limited', ts_online_time_top([
+    '1' => ['nickname' => 'Low', 'seconds' => 10],
+    '2' => ['nickname' => 'High', 'seconds' => 300],
+    '3' => ['nickname' => 'Mid', 'seconds' => 100],
+], 2), [
+    ['nickname' => 'High', 'seconds' => 300],
+    ['nickname' => 'Mid', 'seconds' => 100],
+]);
 
 if ($failures > 0) {
     fwrite(STDERR, "\n$failures test(s) failed.\n");

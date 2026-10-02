@@ -1,35 +1,104 @@
 :root {
-  --bg: #0f0e0d; --surface: #1a1918; --surface2: #222120; --border: #2e2d2b;
-  --text: #d4d3d1; --muted: #787776; --faint: #4a4948;
-  --primary: #4f98a3; --primary-dim: #2a5a61;
-  --radius: 8px; --font: 'Inter', system-ui, sans-serif;
+  /* Near-black navy ground, cold charcoal surfaces, icy cyan as the one
+     accent. Single dark theme by design - no light variant. */
+  --bg: #0a0e14; --surface: #121a24; --surface2: #1a232e; --border: #24303d;
+  --text: #eef2f6; --muted: #8695a6; --faint: #4c5866;
+  --accent: #3ee3f0; --accent-dim: #123943;
+  --good: #4fd07a;
+  --radius: 0;
+  --font-display: 'Unbounded', system-ui, sans-serif;
+  --font: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px;
+  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+}
 .wrap { width: 100%; max-width: 480px; }
-.logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-.logo svg { color: var(--primary); }
-.logo-text { font-size: 18px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); }
-.logo-sub { font-size: 12px; color: var(--muted); }
-.lang-switch { margin-left: auto; font-size: 11px; color: var(--muted); }
+.wrap.wide { max-width: 880px; }
+
+/* ─── Hero banner ──────────────────────────────────────────────────────── */
+.hero {
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #0c1119 0%, #0a0e14 100%);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 22px 24px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.hero::before {
+  /* Faint cyan glow behind the peak, echoing the banner's ridge-glow. */
+  content: ""; position: absolute; left: 10%; top: -30%; width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(62,227,240,.16) 0%, rgba(62,227,240,0) 70%);
+  pointer-events: none;
+}
+.hero-mark { position: relative; flex-shrink: 0; color: var(--accent); }
+.hero-brand { position: relative; display: flex; flex-direction: column; gap: 2px; }
+.lang-switch { position: relative; margin-left: auto; font-size: 11px; color: var(--muted); align-self: center; }
 .lang-switch a { color: var(--muted); text-decoration: none; }
-.lang-switch a.active { color: var(--primary); font-weight: 600; }
+.lang-switch a.active { color: var(--accent); font-weight: 600; }
 .lang-switch a:hover { color: var(--text); }
+/* Small, unobtrusive nav-home icon in the banner's corner (soundboard.php) -
+   replaces a full-width "Zurück" button at the bottom of the page. */
+.hero-home {
+  position: absolute; top: 12px; right: 12px; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; color: var(--muted); text-decoration: none;
+  transition: color .15s;
+}
+.hero-home:hover { color: var(--accent); }
+.hero-home svg { width: 16px; height: 16px; }
+.hero-title {
+  font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1;
+  letter-spacing: 0.03em; color: var(--text); text-transform: uppercase; text-wrap: balance;
+}
+.hero-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
+.hero-since { font-size: 11px; color: var(--faint); }
+
+/* Two-column layout: tree + quote box side by side (only used when the
+   quote box feature is on - see config.php's quote_channel_name). */
+.layout { display: flex; gap: 16px; align-items: flex-start; }
+.col-tree { flex: 1 1 480px; min-width: 0; }
+.col-quotes { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 820px) {
+  /* flex-basis on .col-tree/.col-quotes is meant as a WIDTH (side-by-side
+     layout) - in a column direction it's read as a target HEIGHT instead,
+     which stretched both stacked boxes and left a large empty gap between
+     them. Reset to content-sized once stacked. */
+  .layout { flex-direction: column; }
+  .col-tree, .col-quotes { flex: 0 0 auto; }
+  /* align-items: flex-start (needed on the desktop side-by-side layout so
+     the two columns don't stretch to match each other's height) has a
+     different effect once stacked: on the cross axis of a column-direction
+     flex container that's the horizontal axis, so it shrink-wraps each
+     column to its content width instead of the full row width - the tree
+     ended up narrower than the hero/quote box above and below it, not
+     flush with their edges. Stretch once there's only one per row. */
+  .layout { align-items: stretch; }
+}
+
+/* 120% scale, desktop only (matches the layout's own side-by-side
+   breakpoint) - zoom (not transform:scale) so it actually reflows instead
+   of overlapping the surrounding page padding. */
+@media (min-width: 821px) {
+  .wrap { zoom: 1.2; }
+}
 
 /* Server card */
 .server-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 8px; }
 .server-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.server-icon { width: 36px; height: 36px; background: var(--primary-dim); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0; }
-.server-icon svg { width: 18px; height: 18px; }
-.server-name { display: block; font-weight: 600; font-size: 15px; }
-.server-online { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); margin-top: 2px; }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: #4caf50; flex-shrink: 0; animation: pulse 2s ease infinite; }
+.server-icon { width: 36px; height: 36px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
+.server-icon svg { width: 20px; height: 20px; }
+.server-name { display: block; font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: 0.01em; }
+.server-online { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 3px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px rgba(79,208,122,.18); flex-shrink: 0; animation: pulse 2s ease infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 .stats { display: flex; gap: 0; border-top: 1px solid var(--border); padding-top: 12px; }
 .stat { flex: 1; text-align: center; }
 .stat + .stat { border-left: 1px solid var(--border); }
-.stat-val { display: block; font-size: 16px; font-weight: 700; color: var(--text); }
-.stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; display: block; }
+.stat-val { display: block; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 700; color: var(--text); }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 3px; display: block; letter-spacing: 0.02em; }
 
 /* Tree */
 .tree { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
@@ -39,23 +108,152 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); font
 .ch-icon { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; }
 .ch-icon svg { width: 14px; height: 14px; }
 .ch-name { flex: 1; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.channel.active .ch-name { color: var(--primary); }
-.ch-count { font-size: 11px; background: var(--primary-dim); color: var(--primary); border-radius: 10px; padding: 1px 7px; font-weight: 600; flex-shrink: 0; margin-right: 10px; }
+.channel.active { position: relative; }
+.channel.active::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--accent); }
+.channel.active .ch-name { color: var(--accent); }
+.ch-count { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 11px; background: var(--accent-dim); color: var(--accent); padding: 1px 7px; font-weight: 600; flex-shrink: 0; margin-right: 10px; }
 .ch-topic { font-size: 11px; color: var(--muted); padding: 0 12px 7px 0; margin-top: -3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .client { display: flex; align-items: center; gap: 7px; padding: 5px 12px 5px 0; border-top: 1px solid var(--border); background: var(--surface2); }
-.cl-icon { width: 13px; height: 13px; color: var(--primary); flex-shrink: 0; }
+.cl-icon { width: 13px; height: 13px; color: var(--accent); flex-shrink: 0; }
 .cl-name { font-size: 12px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .client.away .cl-name { color: var(--muted); }
 .status-icon { width: 12px; height: 12px; color: var(--muted); flex-shrink: 0; }
-.group-badge { font-size: 10px; background: var(--primary-dim); color: var(--primary); border-radius: 4px; padding: 1px 5px; margin-right: 10px; font-weight: 600; }
-.away-badge { font-size: 10px; background: var(--border); color: var(--muted); border-radius: 4px; padding: 1px 5px; margin-right: 10px; }
-.spacer { height: 4px; background: var(--bg); }
+.group-badge { font-size: 10px; background: var(--accent-dim); color: var(--accent); padding: 1px 5px; margin-right: 10px; font-weight: 600; }
+.away-badge { font-size: 10px; background: var(--border); color: var(--muted); padding: 1px 5px; margin-right: 10px; }
+/* TeamSpeak spacer channels: a plain divider line ("*"/no-align-letter, or
+   any align-lettered spacer with no label), or a section heading (l/c/r
+   with a label) - both borderless/iconless, unlike a real channel row, to
+   match how the TS client itself renders these. */
+.ch-spacer-line { padding: 9px 12px 9px 0; }
+.ch-spacer-line span { display: block; height: 1px; background: var(--border); }
+.ch-spacer-label { padding: 8px 12px 6px 0; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
+.ch-spacer-left { text-align: left; }
+.ch-spacer-center { text-align: center; }
+.ch-spacer-right { text-align: right; }
 
 /* Footer */
-.footer { font-size: 11px; color: var(--faint); text-align: center; padding: 10px; }
-.error { background: #2a1515; border: 1px solid #5a2020; color: #e07070; border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.footer { font-size: 11px; color: var(--faint); text-align: center; padding: 10px; font-family: var(--font-mono); }
+.error { background: #241318; border: 1px solid #4a2530; color: #ef8a9a; border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+
+/* Quote box */
+.quote-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; max-height: 600px; display: flex; flex-direction: column; }
+.quote-box-header { font-family: var(--font-display); font-weight: 600; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; flex-shrink: 0; }
+.quote-list { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+.quote-card { background: var(--surface2); border: 1px solid var(--border); border-left: 2px solid var(--accent); padding: 10px 12px; }
+.quote-text { font-size: 13px; color: var(--text); line-height: 1.5; font-style: italic; }
+.quote-attribution { font-family: var(--font-mono); font-size: 11px; color: var(--accent); margin-top: 6px; text-align: right; }
+.quote-empty { font-size: 13px; color: var(--muted); }
+
+/* Leaderboard (reuses .quote-box/.quote-box-header for the same card look) */
+.leaderboard-list { overflow-y: auto; display: flex; flex-direction: column; }
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 6px 2px; border-bottom: 1px solid var(--border); }
+.lb-row:last-child { border-bottom: none; }
+.lb-rank { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 11px; color: var(--muted); width: 16px; flex-shrink: 0; }
+.lb-row:nth-child(-n+3) .lb-rank { color: var(--accent); font-weight: 700; }
+.lb-name { flex: 1; font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-time { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 12px; color: var(--accent); flex-shrink: 0; }
+.leaderboard-note { font-size: 11px; color: var(--faint); margin-top: 10px; }
+
+/* Soundboard gate (sidebar, under the quote box) */
+.soundboard-gate { display: flex; flex-direction: column; gap: 8px; }
+.soundboard-gate .connect-btn { margin-top: 0; }
+.soundboard-fields { display: flex; gap: 8px; }
+.soundboard-fields[hidden] { display: none; }
+.soundboard-fields input { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; font-family: var(--font); font-size: 13px; border-radius: var(--radius); }
+/* .connect-btn's own "width: 100%" (meant for it as a standalone full-width
+   link elsewhere on the page) becomes this button's flex-basis in a row
+   flex container - without this override it tries to claim the entire row
+   width for itself, squeezing the password input next to it down to a
+   sliver. */
+.soundboard-fields .connect-btn { width: auto; flex: 0 0 auto; white-space: nowrap; }
+.soundboard-error { font-size: 11px; color: #ef8a9a; }
+
+/* Soundboard page */
+.soundboard-login { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
+.soundboard-login label { font-size: 12px; color: var(--muted); }
+.soundboard-login input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; font-family: var(--font); font-size: 14px; border-radius: var(--radius); }
+.sound-group { margin-bottom: 20px; }
+.sound-group-title {
+  display: flex; align-items: center; gap: 5px; cursor: pointer; list-style: none;
+  font-family: var(--font-display); font-weight: 700; font-size: 12px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+}
+/* Hides the browser's own default disclosure triangle - a custom chevron
+   (rotated via the [open] state below) replaces it instead. */
+.sound-group-title::-webkit-details-marker { display: none; }
+.sound-group-title::marker { content: ''; }
+.sound-group-chevron { width: 12px; height: 12px; flex-shrink: 0; transition: transform .15s; }
+.sound-group[open] .sound-group-chevron { transform: rotate(90deg); }
+.soundboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.sound-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 10px; color: var(--text); cursor: pointer; font-family: var(--font); font-size: 12px; text-align: center; transition: background .15s, border-color .15s; }
+.sound-btn:hover { border-color: var(--accent); }
+.sound-btn.playing { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.sound-icon { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }
+.sound-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 
 /* Connect button */
-.connect-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; padding: 10px; background: var(--primary-dim); color: var(--primary); border: 1px solid var(--primary); border-radius: var(--radius); font-size: 13px; font-weight: 600; text-decoration: none; transition: background .15s; }
-.connect-btn:hover { background: var(--primary); color: #fff; }
+.connect-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; padding: 10px; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); border-radius: var(--radius); font-family: var(--font-display); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; text-decoration: none; transition: background .15s, color .15s; }
+.connect-btn:hover { background: var(--accent); color: #06181b; }
 .connect-btn svg { width: 16px; height: 16px; }
+
+/* Legal page (datenschutz.php) */
+.legal { text-align: left; margin-bottom: 8px; }
+.legal h2 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--text); margin-top: 22px; margin-bottom: 8px; }
+.legal h2:first-child { margin-top: 0; }
+.legal p { font-size: 13px; line-height: 1.6; color: var(--muted); margin-bottom: 10px; }
+.legal ul { font-size: 13px; line-height: 1.6; color: var(--muted); margin: 0 0 10px 18px; }
+.legal li { margin-bottom: 4px; }
+.legal code { font-family: var(--font-mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; color: var(--accent); }
+.legal a { color: var(--accent); }
+
+/* Footer link to the privacy page, present on every page - deliberately
+   understated (small, muted) rather than a prominent banner, matching the
+   "unobtrusive" requirement it was added for - but always present and
+   reachable in one click from anywhere on the site. */
+.legal-footer { text-align: center; margin-top: 10px; }
+.legal-footer a { font-size: 11px; color: var(--faint); text-decoration: none; }
+.legal-footer a:hover { color: var(--muted); text-decoration: underline; }
+
+/* Floating playback bar (soundboard.php) - always visible on that page
+   (see body.has-soundbar below for the bottom padding this requires, so it
+   doesn't cover content underneath it). Fixed to the viewport, not .wrap,
+   so it stays reachable regardless of scroll position on a long sound list. */
+body.has-soundbar { padding-bottom: 90px; }
+.soundbar {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  width: calc(100% - 32px); max-width: 360px; z-index: 10;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--accent);
+  padding: 8px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.soundbar[hidden] { display: none; }
+.soundbar-stop {
+  flex-shrink: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); cursor: pointer;
+}
+.soundbar-stop:hover { background: var(--accent); color: #06181b; }
+.soundbar-stop svg { width: 13px; height: 13px; }
+.soundbar-label { flex: 1; min-width: 0; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.soundbar-volume-icon { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+.soundbar-volume { width: 70px; flex-shrink: 0; accent-color: var(--accent); }
+.soundbar-close {
+  flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--faint); cursor: pointer;
+}
+.soundbar-close:hover { color: var(--muted); }
+.soundbar-close svg { width: 13px; height: 13px; }
+
+/* "Scroll to top" link at the very bottom of a long page (soundboard.php,
+   datenschutz.php) - relies on #top on the .wrap element + the global
+   scroll-behavior:smooth above, no JS needed. */
+.scroll-top { display: flex; align-items: center; justify-content: center; margin-top: 14px; color: var(--faint); }
+.scroll-top:hover { color: var(--muted); }
+.scroll-top svg { width: 18px; height: 18px; }
+
+.toggle-all-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.toggle-all-btn {
+  background: none; border: none; cursor: pointer; padding: 4px 0;
+  font-family: var(--font); font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.toggle-all-btn:hover { color: var(--accent); }

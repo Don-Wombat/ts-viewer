@@ -5,6 +5,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Optional quote box next to the channel tree, reading quotes from a
+  channel's description (`TS_QUOTE_CHANNEL_ID`).
+- Optional online-time leaderboard (`TS_TRACK_ONLINE_TIME` +
+  `TS_TRACK_INTERVAL`), tracked by a background poller
+  (`cli/track_online_time.php`) independent of website traffic.
+- Optional password-gated soundboard subpage (`TS_SOUNDS_DIR` +
+  `TS_SOUNDBOARD_PASSWORD`, see the README's new "Soundboard" section) —
+  per-IP rate-limited login, a floating playback bar (stop/volume/dismiss),
+  collapsible sections.
+- `TS_HIDDEN_CHANNELS`: hide channels from the tree by exact name.
+- `TS_FOUNDED_YEAR`: optional "· since {year}" next to the brand subtitle.
+- Self-hosted fonts (`html/assets/fonts.css`) instead of a Google Fonts
+  link, and a dedicated favicon.
+- Redesigned hero banner (`.hero`/`.hero-brand` in `style.css`).
+
+### Changed
+- TeamSpeak-client-accurate spacer channel rendering: now handles the `l`/
+  `c`/`r`/`*` alignment variants properly (section headings vs. plain
+  dividers) instead of the previous all-or-nothing approximation.
 - `bin/e2e_playwright.mjs`: browser-based end-to-end test with Playwright.
   Loads the actual rendered page against a running container backed by
   `bin/mock_serverquery.php` and checks the DOM, the language switch, the

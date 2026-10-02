@@ -12,6 +12,11 @@ services:
     env_file:
       - .env
     volumes:
+      # Soundboard clips (see TS_SOUNDS_DIR/TS_SOUNDBOARD_PASSWORD in .env) -
+      # a bind mount, not baked into the image via COPY, so new clips don't
+      # need a rebuild and this gitignored local directory never has to be
+      # committed. Read-only: the app only ever reads these.
+      - ./Sounds:/var/www/sounds:ro
       - ts-viewer-cache:/var/cache/ts-viewer
 
 volumes:

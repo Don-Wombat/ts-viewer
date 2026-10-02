@@ -22,8 +22,18 @@ function ts_fetch_from_server(array $config): array {
         . "serverinfo\n"
         . "channellist -topic -flags -limits\n"
         . "clientlist -uid -away -voice -groups\n"
-        . "servergrouplist\n"
-        . "quit\n";
+        . "servergrouplist\n";
+    // Folded into the same connection/bundle instead of a second one opened
+    // afterwards - two SSH connections back-to-back within the same request
+    // tripped this server's flood protection in testing (the second one got
+    // dropped mid-handshake). channellist has no -description flag, so the
+    // only way to get it is channelinfo, which needs a cid - hardcoded via
+    // config instead of looked up by name every cycle, since that lookup
+    // would itself need the channellist response back first.
+    if (!empty($config['quote_channel_id'])) {
+        $commands .= "channelinfo cid=" . (int)$config['quote_channel_id'] . "\n";
+    }
+    $commands .= "quit\n";
 
     try {
         $transport = ts_create_transport($config);
@@ -40,10 +50,30 @@ function ts_fetch_from_server(array $config): array {
         return ['error' => ['key' => 'err_unreachable']];
     }
 
-    $serverinfo     = '';
-    $channellist    = '';
-    $clientlist     = '';
-    $servergrouplist = '';
+    $lines = ts_classify_bundle_lines($out);
+
+    $result = [
+        'serverinfo'      => ts_parse_single($lines['serverinfo']),
+        'channellist'     => ts_parse_list($lines['channellist']),
+        'clientlist'      => ts_parse_list($lines['clientlist']),
+        'servergrouplist' => ts_parse_list($lines['servergrouplist']),
+    ];
+
+    if (!empty($config['quote_channel_id'])) {
+        $result['quotes'] = ts_parse_quotes($lines['channeldescription']);
+    }
+
+    return $result;
+}
+
+// Splits the raw multi-command bundle response into one raw line per
+// command (serverinfo/channellist/clientlist/servergrouplist/channelinfo -
+// channelinfo only present if it was actually requested). Extracted into
+// its own function so it's unit-testable without a live/mock transport -
+// see bin/selftest_parser.php for the regression test covering the ordering
+// note below.
+function ts_classify_bundle_lines(string $out): array {
+    $lines = ['serverinfo' => '', 'channellist' => '', 'clientlist' => '', 'servergrouplist' => '', 'channeldescription' => ''];
 
     foreach (explode("\n", $out) as $line) {
         $line = trim($line);
@@ -57,16 +87,29 @@ function ts_fetch_from_server(array $config): array {
         // literal space in a value to "\s" - a real, unescaped space in the
         // raw response line can therefore only be an actual field separator
         // inserted by the server, never attacker-supplied content.
-        if (preg_match('/(?:^|\s)virtualserver_name=/', $line)) { $serverinfo = $line; continue; }
-        if (preg_match('/(?:^|\s)channel_name=/', $line)) { $channellist = $line; continue; }
-        if (preg_match('/(?:^|\s)client_nickname=/', $line)) { $clientlist = $line; continue; }
-        if (preg_match('/(?:^|\s)sgid=/', $line)) { $servergrouplist = $line; continue; }
+        if (preg_match('/(?:^|\s)virtualserver_name=/', $line)) { $lines['serverinfo'] = $line; continue; }
+        // Checked before channel_name=: the channelinfo response line (if
+        // requested) also contains "channel_name=" as its second field, and
+        // must not overwrite channellist with just that one channel.
+        if (preg_match('/(?:^|\s)channel_description=/', $line)) { $lines['channeldescription'] = $line; continue; }
+        if (preg_match('/(?:^|\s)channel_name=/', $line)) { $lines['channellist'] = $line; continue; }
+        if (preg_match('/(?:^|\s)client_nickname=/', $line)) { $lines['clientlist'] = $line; continue; }
+        if (preg_match('/(?:^|\s)sgid=/', $line)) { $lines['servergrouplist'] = $line; continue; }
     }
 
-    return [
-        'serverinfo'      => ts_parse_single($serverinfo),
-        'channellist'     => ts_parse_list($channellist),
-        'clientlist'      => ts_parse_list($clientlist),
-        'servergrouplist' => ts_parse_list($servergrouplist),
-    ];
+    return $lines;
+}
+
+// Splits a channelinfo response line's channel_description into individual
+// quotes - one per paragraph (blank-line separated); a single "\n" inside
+// one quote (a multi-line quote) is kept as-is. Returns [] if the channel
+// had no description, or if $line is empty (channelinfo wasn't requested,
+// or its response didn't come back - e.g. the configured cid no longer
+// exists - never fatal, the rest of the page is unaffected either way).
+function ts_parse_quotes(string $line): array {
+    if ($line === '') return [];
+    $description = ts_parse_item($line)['channel_description'] ?? '';
+    if ($description === '') return [];
+    $blocks = preg_split('/\n\s*\n/', trim($description));
+    return array_values(array_filter(array_map('trim', $blocks), fn($b) => $b !== ''));
 }

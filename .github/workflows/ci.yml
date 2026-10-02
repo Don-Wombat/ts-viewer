@@ -73,6 +73,22 @@ jobs:
           php-version: "8.3"
       - name: Build Docker image
         run: docker build -t ts-viewer:ci .
+      # Installed here, BEFORE the one-shot mock starts listening (not after,
+      # as this used to be ordered) - "npm install"/the Chromium download can
+      # easily take longer than the mock's own 30s accept() timeout
+      # (bin/mock_serverquery.php), and unlike a real server it only ever
+      # accepts ONE connection before exiting. With Playwright installed
+      # first, this step's variable-duration network fetch happens before the
+      # mock's accept() window even opens, instead of eating into it - it
+      # used to fail consistently once npm/download latency pushed the first
+      # real request (Playwright's own page.goto() below) past 30s: the mock
+      # had already given up and exited, so the app's actual first ServerQuery
+      # attempt got a connection-refused, cached as the error state for the
+      # rest of the job (TS_CACHE_TTL=600 below).
+      - name: Install Playwright (Chromium only)
+        run: |
+          npm install --no-save playwright@1.55.1
+          npx playwright install --with-deps chromium
       - name: Start the mock ServerQuery server
         # Same fixture bin/test_raw_transport.php uses, just reached over the
         # network from inside the ts-viewer container instead of via a
@@ -106,10 +122,6 @@ jobs:
             -e TS_HOST=203.0.113.1 -e TS_TRANSPORT=raw -e TS_CONNECT_TIMEOUT=1 \
             -e TS_USER=x -e TS_PASS=x \
             ts-viewer:ci
-      - name: Install Playwright (Chromium only)
-        run: |
-          npm install --no-save playwright@1.55.1
-          npx playwright install --with-deps chromium
       - name: Run the Playwright E2E check
         env:
           TS_VIEWER_URL: http://127.0.0.1/

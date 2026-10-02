@@ -1,0 +1,72 @@
+/* Self-hosted fonts - replaces the fonts.googleapis.com/fonts.gstatic.com
+   link that used to be here. Loading fonts directly from Google's CDN sends
+   every visitor's IP address to Google on every page view (a third-country
+   data transfer under GDPR) purely to render static UI text - well-known
+   legal risk in Germany (e.g. LG München I, Jan. 2022) for exactly this
+   pattern. Self-hosting removes the third party entirely: no request ever
+   leaves this server, nothing to disclose or gate behind consent.
+   Latin subset only (covers German/English, including äöüß) - this app has
+   no use for Cyrillic/Greek/Vietnamese glyphs, so those subsets Google's
+   CSS also serves were dropped instead of downloaded. Both weights per
+   family point at the same file on purpose: each of these fonts ships all
+   the weights this project uses in one variable-font file, exactly like
+   Google's own CSS did (compare the identical URLs it served per weight). */
+
+@font-face {
+  font-family: 'Unbounded';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/unbounded.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Unbounded';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/unbounded.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/manrope.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/manrope.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/manrope.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/manrope.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/jetbrains-mono.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/jetbrains-mono.woff2') format('woff2');
+}

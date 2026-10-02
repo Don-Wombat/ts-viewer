@@ -34,8 +34,13 @@ html/lib/ts_client.php   Builds the ServerQuery command bundle, calls the transp
 html/lib/cache.php       File-based cache with locking (avoids hammering the TS server)
 html/lib/render.php      Turns parsed data into the HTML channel tree
 html/lib/i18n.php        Translations (`ts_t()`) - see "Adding a UI string" below
+html/lib/auth.php        Soundboard session cookie + per-IP login rate limiting
+html/lib/sounds.php      Lists/resolves soundboard clip files from TS_SOUNDS_DIR
+html/lib/ts_online_time.php  Online-time leaderboard accumulator (read/write/merge)
+cli/track_online_time.php    Background poller for the leaderboard (run by docker/entrypoint.sh)
 bin/                     CLI test scripts (not shipped in the Docker image beyond the app itself)
-docker/entrypoint.sh     Fixes TS_CACHE_DIR ownership at container start (survives volume mounts)
+docker/entrypoint.sh     Fixes TS_CACHE_DIR ownership at container start (survives volume mounts),
+                         starts the online-time poller if TS_TRACK_ONLINE_TIME is set
 ```
 
 ## Running the tests
@@ -45,7 +50,7 @@ the parts that matter most:
 
 ```bash
 # Syntax-check every PHP file
-php -l html/index.php html/config.php html/lib/*.php bin/*.php
+php -l html/*.php html/lib/*.php bin/*.php
 
 # Protocol parser unit tests (escaping, list/single parsing, uptime formatting)
 php bin/selftest_parser.php

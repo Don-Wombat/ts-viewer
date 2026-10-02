@@ -1,6 +1,6 @@
 # Pinned to a digest for reproducible builds (currently php:8.3-apache).
 # Dependabot (.github/dependabot.yml) proposes PRs when this changes.
-FROM php:8.3-apache@sha256:060ed9c0f6e4bbe4f8b25a34ca1ec596b96d8f4011cf7ee7eb6b7eecf01cb74f
+FROM php:8.5-apache@sha256:70d80539dcacae817d9a1320518b95c86bb9568835ef3a7a024d57a4898c90e4
 RUN apt-get update && apt-get install -y sshpass openssh-client && rm -rf /var/lib/apt/lists/*
 COPY html/ /var/www/html/
 # Online-time leaderboard poller (see docker/entrypoint.sh) - not part of

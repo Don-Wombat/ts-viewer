@@ -5,13 +5,13 @@
 A lightweight, self-hostable PHP page that shows, live via ServerQuery, who's
 currently connected to a TeamSpeak server (channel tree incl. topic, online
 clients with away/mute status and role badge), plus a handful of optional
-community extras (quote box, online-time leaderboard, password-gated
-soundboard). One PHP process + Docker, no Node toolchain, no admin panel.
-UI available in German and English.
+community extras (quote box or rule box, online-time leaderboard). One PHP
+process + Docker, no Node toolchain, no admin panel. UI available in German
+and English.
 
 Supports TeamSpeak 3 (from server version 3.3.0), TeamSpeak 5 and TeamSpeak 6.
 
-<img src="docs/screenshot.png" alt="Screenshot of ts-viewer showing a channel tree with online clients, mute icons and a role badge, plus the optional quote box, leaderboard and soundboard button" width="420">
+<img src="docs/screenshot.png" alt="Screenshot of ts-viewer showing a channel tree with online clients, mute icons and a role badge, plus the optional quote box and leaderboard" width="420">
 
 *(Demo data — not a real server.)*
 
@@ -23,11 +23,10 @@ Supports TeamSpeak 3 (from server version 3.3.0), TeamSpeak 5 and TeamSpeak 6.
 - TeamSpeak-client-accurate spacer channel rendering (section headings and
   plain dividers), and optional exact-name channel hiding (`TS_HIDDEN_CHANNELS`)
 - Optional quote box next to the tree, reading from a channel's description
-  (`TS_QUOTE_CHANNEL_ID`)
+  (`TS_QUOTE_CHANNEL_ID`), or a rule box with a static list of house rules
+  (`TS_RULES_TEXT`) as an alternative — both can be on at once, they just stack
 - Optional online-time leaderboard, tracked by a background poller
   independent of website traffic (`TS_TRACK_ONLINE_TIME`)
-- Optional password-gated soundboard subpage for a directory of short clips
-  (`TS_SOUNDS_DIR` + `TS_SOUNDBOARD_PASSWORD`), see [Soundboard](#soundboard)
 - German/English UI, switchable per visitor
 - Configurable branding (title, subtitle, founding year, theme colors, connect button)
 - SSH or unencrypted raw ServerQuery transport — works with TS3, TS5 and TS6
@@ -44,7 +43,7 @@ docker compose -f docker-compose.example.yml up -d --build
 `docker-compose.example.yml` builds from the tagged GitHub release by
 default. Alternatively, prebuilt images are available at
 [`ghcr.io/don-wombat/ts-viewer`](https://github.com/Don-Wombat/ts-viewer/pkgs/container/ts-viewer)
-(e.g. `ghcr.io/don-wombat/ts-viewer:v0.1.7` or `:latest`) — just swap
+(e.g. `ghcr.io/don-wombat/ts-viewer:v0.2.0` or `:latest`) — just swap
 `build:` for `image: ghcr.io/don-wombat/ts-viewer:<tag>` in
 `docker-compose.example.yml` to skip the local build.
 
@@ -99,10 +98,9 @@ different TS6 server versions.
 | `TS_DEFAULT_LANG` | no | `de` | Default language (`de`\|`en`), see [Language](#language) |
 | `TS_HIDDEN_CHANNELS` | no | empty (off) | Comma-separated exact channel names to hide from the tree entirely (channel + its clients/subchannels) |
 | `TS_QUOTE_CHANNEL_ID` | no | empty (off) | Channel ID whose description holds quotes (one per paragraph), shown next to the tree |
+| `TS_RULES_TEXT` | no | empty (off) | Static numbered list of house rules, shown next to the tree as an alternative to the quote box — one rule per line, `\n`-separated (see `.env.example`) |
 | `TS_TRACK_ONLINE_TIME` | no | empty (off) | Enables the online-time leaderboard's background poller |
 | `TS_TRACK_INTERVAL` | no | `60` | Poll interval in seconds for the online-time tracker |
-| `TS_SOUNDS_DIR` | no | empty (off) | Directory of soundboard clips (bind-mounted, see [Soundboard](#soundboard)) — needs `TS_SOUNDBOARD_PASSWORD` too |
-| `TS_SOUNDBOARD_PASSWORD` | no | empty (off) | Password gating the soundboard subpage — needs `TS_SOUNDS_DIR` too |
 
 ## Language
 
@@ -111,32 +109,11 @@ header toggle ("DE · EN") — the choice is remembered via a cookie. Without a
 selection, `TS_DEFAULT_LANG` applies (default `de`). New UI strings are
 maintained in `html/lib/i18n.php`, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Soundboard
-
-An optional, password-gated subpage (`soundboard.php`) listing short audio
-clips, reachable via a button under the quote box. Off unless both
-`TS_SOUNDS_DIR` and `TS_SOUNDBOARD_PASSWORD` are set — a directory with no
-password would mean a public soundboard, which defeats the point.
-
-- Point `TS_SOUNDS_DIR` at a directory bind-mounted read-only into the
-  container (see the `Sounds/` volume in `docker-compose.example.yml`) — one
-  subfolder per section (e.g. one per person), root-level files grouped
-  under "General". The list is read fresh on every page load: add/remove
-  files on the host, no rebuild or restart needed.
-- Every file gets a button labeled with its uppercased filename (extension
-  stripped). Clicking always restarts playback from the beginning, even on
-  an already-playing or already-finished clip. A floating bar lets visitors
-  stop playback and adjust volume without scrolling back to the grid.
-- The password gate is enforced server-side on both the page and the audio
-  endpoint (`sound.php`), including per-IP rate limiting on the login
-  itself — see [SECURITY.md](SECURITY.md) for details.
-
 ## Security
 
 See [SECURITY.md](SECURITY.md) for security-relevant design decisions
-(credential handling, transport choice, cache directory permissions, the
-soundboard's session cookie and login rate limiting, ...) and how to report
-a vulnerability.
+(credential handling, transport choice, cache directory permissions, ...)
+and how to report a vulnerability.
 
 ## Development
 

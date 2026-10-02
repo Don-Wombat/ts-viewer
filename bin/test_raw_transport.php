@@ -8,8 +8,6 @@ require __DIR__ . '/../html/lib/ts_transport.php';
 require __DIR__ . '/../html/lib/ts_transport_raw.php';
 require __DIR__ . '/../html/lib/ts_transport_ssh.php';
 require __DIR__ . '/../html/lib/ts_client.php';
-require __DIR__ . '/../html/lib/sounds.php';
-require __DIR__ . '/../html/lib/auth.php';
 
 $failures = 0;
 
@@ -151,6 +149,18 @@ foreach ($attributionCases as $i => [$input, $expectedText, $expectedAttr]) {
     check("quote attribution split #$i: attribution", $attr === $expectedAttr);
 }
 
+// --- Rule box: an alternative to the quote box, static numbered list from
+// TS_RULES_TEXT (already \n-unescaped by config.php by the time it reaches
+// here - see the comment there) ---
+$ruleHtml = ts_render_rulebox("Rule one\nRule two\n\nRule three");
+check('rule box: renders exactly 3 list items (blank line skipped)',
+    substr_count($ruleHtml, '<li>') === 3);
+check('rule box: first rule text present', str_contains($ruleHtml, '<li>Rule one</li>'));
+check('rule box: third rule text present (blank line between 2 and 3 doesn\'t break the rest)',
+    str_contains($ruleHtml, '<li>Rule three</li>'));
+check('rule box: user-supplied rule text is escaped',
+    str_contains(ts_render_rulebox('<script>alert(1)</script>'), '&lt;script&gt;'));
+
 // --- Spacer-channel rendering: matches the TeamSpeak client's own
 // "[<align>spacerN]label" convention (l/c/r = aligned heading, */none =
 // plain divider line) instead of the app's earlier approximation, which
@@ -225,104 +235,6 @@ check('the following section heading "Temporary Channels" is kept',
 $unfilteredHtml = ts_render_channels($hiddenChildren, $hiddenCmap, [], '0', 0, 32, [], null, []);
 check('TS_HIDDEN_CHANNELS empty -> nothing is filtered',
     str_contains($unfilteredHtml, 'Special Channels') && str_contains($unfilteredHtml, 'Quote Box'));
-
-// --- Soundboard: file listing/labeling (html/lib/sounds.php), against a
-// throwaway directory tree mirroring the real archive's shape - a mix of
-// root-level files and one subfolder per person, plus a non-audio file that
-// must be skipped. ---
-$soundsDir = sys_get_temp_dir() . '/ts_viewer_test_sounds_' . bin2hex(random_bytes(4));
-mkdir($soundsDir);
-mkdir($soundsDir . '/Benny');
-file_put_contents($soundsDir . '/Artikel 13 Song.mp3', 'x');
-file_put_contents($soundsDir . '/klopf klopf.mp3', 'x');
-file_put_contents($soundsDir . '/1637489454222.jpg', 'x'); // not audio - must be skipped
-file_put_contents($soundsDir . '/Benny/Benny fettsau.mp3', 'x');
-file_put_contents($soundsDir . '/Benny/Nieser.wav', 'x');
-
-$soundGroups = ts_sounds_list($soundsDir);
-check('root-level files are grouped under "" (shown as "General" on the page)',
-    isset($soundGroups['']) && in_array('Artikel 13 Song.mp3', $soundGroups[''], true) && in_array('klopf klopf.mp3', $soundGroups[''], true));
-check('the non-audio .jpg file is skipped entirely',
-    !in_array('1637489454222.jpg', $soundGroups[''] ?? [], true));
-check('a subfolder becomes its own group, keyed by folder name',
-    isset($soundGroups['Benny']) && in_array('Benny/Benny fettsau.mp3', $soundGroups['Benny'], true) && in_array('Benny/Nieser.wav', $soundGroups['Benny'], true));
-check('the root group ("") sorts first',
-    array_key_first($soundGroups) === '');
-
-check('label: filename uppercased, extension stripped, folder prefix dropped',
-    ts_sound_label('Benny/Benny fettsau.mp3') === 'BENNY FETTSAU');
-
-check('resolve: an existing file inside a subfolder resolves to a real, in-bounds path',
-    ts_sound_resolve($soundsDir, 'Benny/Benny fettsau.mp3') === realpath($soundsDir . '/Benny/Benny fettsau.mp3'));
-check('resolve: a ".." path-traversal attempt is rejected',
-    ts_sound_resolve($soundsDir, '../etc/passwd') === null);
-check('resolve: a disallowed extension (the .jpg) is rejected even though the file exists',
-    ts_sound_resolve($soundsDir, '1637489454222.jpg') === null);
-check('resolve: a non-existent file is rejected',
-    ts_sound_resolve($soundsDir, 'Benny/does not exist.mp3') === null);
-check('resolve: a NUL byte in the request is rejected',
-    ts_sound_resolve($soundsDir, "Benny/Benny fettsau.mp3\0.jpg") === null);
-
-unlink($soundsDir . '/Artikel 13 Song.mp3');
-unlink($soundsDir . '/klopf klopf.mp3');
-unlink($soundsDir . '/1637489454222.jpg');
-unlink($soundsDir . '/Benny/Benny fettsau.mp3');
-unlink($soundsDir . '/Benny/Nieser.wav');
-rmdir($soundsDir . '/Benny');
-rmdir($soundsDir);
-
-// --- Soundboard: the signed auth cookie (html/lib/auth.php) ---
-$cookie = ts_soundboard_make_cookie_value('correct-password');
-check('a freshly made cookie verifies against the same password',
-    ts_soundboard_verify_cookie_value($cookie, 'correct-password'));
-check('the same cookie does NOT verify against a different password (also covers a changed TS_SOUNDBOARD_PASSWORD invalidating old cookies)',
-    !ts_soundboard_verify_cookie_value($cookie, 'a-different-password'));
-check('a tampered signature is rejected',
-    !ts_soundboard_verify_cookie_value(substr($cookie, 0, -1) . (substr($cookie, -1) === 'A' ? 'B' : 'A'), 'correct-password'));
-check('garbage input is rejected, not a fatal error',
-    !ts_soundboard_verify_cookie_value('not-a-real-cookie-value', 'correct-password'));
-check('an empty/missing cookie is rejected',
-    !ts_soundboard_verify_cookie_value(null, 'correct-password') && !ts_soundboard_verify_cookie_value('', 'correct-password'));
-
-$expiredPayload = base64_encode((string)(time() - TS_SOUNDBOARD_MAX_AGE - 60));
-$expiredSig = base64_encode(hash_hmac('sha256', $expiredPayload, ts_soundboard_key('correct-password'), true));
-check('a cookie older than TS_SOUNDBOARD_MAX_AGE is rejected',
-    !ts_soundboard_verify_cookie_value($expiredPayload . '.' . $expiredSig, 'correct-password'));
-
-// --- Soundboard: login throttle (html/lib/auth.php) - a security-review
-// finding: without this, a script (curl never sends Sec-Fetch-Site, so it
-// skips that CSRF-ish check entirely) could try passwords against this
-// public endpoint with no delay at all. ---
-$now = 1_700_000_000; // fixed reference instant, independent of wall-clock time
-check('no prior record -> allowed',
-    ts_login_throttle_is_allowed([], '1.2.3.4', $now));
-
-$data = [];
-for ($i = 0; $i < TS_LOGIN_THROTTLE_MAX_ATTEMPTS; $i++) {
-    check("attempt " . ($i + 1) . " of the limit is still allowed",
-        ts_login_throttle_is_allowed($data, '1.2.3.4', $now));
-    $data = ts_login_throttle_apply_failure($data, '1.2.3.4', $now);
-}
-check('one more attempt beyond the limit (within the same window) is blocked',
-    !ts_login_throttle_is_allowed($data, '1.2.3.4', $now));
-check('a different IP is entirely unaffected by another IP\'s failures',
-    ts_login_throttle_is_allowed($data, '5.6.7.8', $now));
-check('after the window has elapsed, the same IP is allowed again',
-    ts_login_throttle_is_allowed($data, '1.2.3.4', $now + TS_LOGIN_THROTTLE_WINDOW + 1));
-
-$dataAfterClear = ts_login_throttle_clear($data, '1.2.3.4');
-check('a successful login clears the record, allowing immediately again',
-    ts_login_throttle_is_allowed($dataAfterClear, '1.2.3.4', $now));
-
-// ts_client_ip(): reads X-Forwarded-For (first/leftmost = the real client,
-// see the comment on the function), falls back to REMOTE_ADDR.
-$_SERVER['HTTP_X_FORWARDED_FOR'] = '9.9.9.9, 10.0.0.1';
-check('ts_client_ip() takes the first (leftmost) entry of X-Forwarded-For',
-    ts_client_ip() === '9.9.9.9');
-unset($_SERVER['HTTP_X_FORWARDED_FOR']);
-$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
-check('ts_client_ip() falls back to REMOTE_ADDR without X-Forwarded-For',
-    ts_client_ip() === '127.0.0.1');
 
 if ($failures > 0) {
     fwrite(STDERR, "\n$failures test(s) failed.\n");

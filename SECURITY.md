@@ -46,19 +46,6 @@ Security-relevant design decisions already in place:
 - All values coming from the TS server (channel/nicknames, topics, group
   names) pass through `htmlspecialchars()` before output — including role
   badges and the channel topic.
-- Soundboard access (if enabled) is enforced server-side on every request to
-  both `soundboard.php` and `sound.php`, not just a hidden UI link — an
-  HMAC-signed session cookie (`html/lib/auth.php`), `HttpOnly`/`SameSite=Lax`/
-  dynamically-set `Secure` (via `X-Forwarded-Proto`, since the app itself
-  only ever sees plain HTTP behind a reverse proxy), and a `Sec-Fetch-Site`
-  check on the login POST. The signing key is derived from
-  `TS_SOUNDBOARD_PASSWORD` itself, so changing the password invalidates
-  every previously issued cookie automatically. `sound.php` additionally
-  validates every requested path against traversal and the allowed audio
-  extensions before serving anything.
-- Soundboard login attempts are rate-limited per IP (file-based, see
-  `ts_login_throttle_*()` in `html/lib/auth.php`) to slow down automated
-  password guessing.
 - The online-time tracker's background poller (if enabled) runs as
   `www-data`, not root, and each poll is bounded by an outer `timeout` so a
   wedged subprocess (e.g. the SSH transport's own child process) can't hang

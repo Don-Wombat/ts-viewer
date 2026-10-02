@@ -74,22 +74,13 @@ function ts_load_config(): array {
         // off (no filtering, matches previous behavior).
         'hidden_channels'    => array_values(array_filter(array_map('trim', explode(',', ts_env('TS_HIDDEN_CHANNELS', '') ?? '')))),
 
-        // Soundboard: a separate page listing short clips from TS_SOUNDS_DIR
-        // (a directory mounted outside the web root, like TS_CACHE_DIR - see
-        // docker-compose.example.yml - so there's no static route that could
-        // ever serve a clip directly, only sound.php after the auth check
-        // below). Requires BOTH to be set - a configured directory with no
-        // password would mean a public soundboard, which contradicts the
-        // whole point of gating it; treat that as off, same as either alone
-        // being unset.
-        'sounds_dir'         => ts_env('TS_SOUNDS_DIR'),
-        // Deliberately a plain env var, like TS_PASS above - this project's
-        // whole config model is "secrets live in .env, gitignored, on a
-        // trusted host" (see config.php's own top-of-file note), so hashing
-        // this one value into another form on disk wouldn't raise the bar;
-        // the actual protection is the signed session cookie in lib/auth.php,
-        // never the password itself, sitting in a browser-visible place.
-        'sounds_password'    => ts_env('TS_SOUNDBOARD_PASSWORD'),
+        // Static TeamSpeak rules text, shown as a numbered list next to the
+        // tree - an alternative to the quote box above for servers that'd
+        // rather show house rules than crowd-sourced quotes (both can be on
+        // at once; they just stack). One rule per line; "\n" (literal
+        // backslash-n, not an actual newline - env files don't reliably
+        // support those) is unescaped to a real line break. Empty = off.
+        'rules_text'         => str_replace('\\n', "\n", ts_env('TS_RULES_TEXT', '') ?? ''),
     ];
 
     $config['cache_file']       = $config['cache_dir'] . '/ts_cache.json';

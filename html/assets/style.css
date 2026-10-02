@@ -39,16 +39,6 @@ body {
 .lang-switch a { color: var(--muted); text-decoration: none; }
 .lang-switch a.active { color: var(--accent); font-weight: 600; }
 .lang-switch a:hover { color: var(--text); }
-/* Small, unobtrusive nav-home icon in the banner's corner (soundboard.php) -
-   replaces a full-width "Zurück" button at the bottom of the page. */
-.hero-home {
-  position: absolute; top: 12px; right: 12px; z-index: 1;
-  display: flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; color: var(--muted); text-decoration: none;
-  transition: color .15s;
-}
-.hero-home:hover { color: var(--accent); }
-.hero-home svg { width: 16px; height: 16px; }
 .hero-title {
   font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1;
   letter-spacing: 0.03em; color: var(--text); text-transform: uppercase; text-wrap: balance;
@@ -154,106 +144,18 @@ body {
 .lb-time { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 12px; color: var(--accent); flex-shrink: 0; }
 .leaderboard-note { font-size: 11px; color: var(--faint); margin-top: 10px; }
 
-/* Soundboard gate (sidebar, under the quote box) */
-.soundboard-gate { display: flex; flex-direction: column; gap: 8px; }
-.soundboard-gate .connect-btn { margin-top: 0; }
-.soundboard-fields { display: flex; gap: 8px; }
-.soundboard-fields[hidden] { display: none; }
-.soundboard-fields input { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; font-family: var(--font); font-size: 13px; border-radius: var(--radius); }
-/* .connect-btn's own "width: 100%" (meant for it as a standalone full-width
-   link elsewhere on the page) becomes this button's flex-basis in a row
-   flex container - without this override it tries to claim the entire row
-   width for itself, squeezing the password input next to it down to a
-   sliver. */
-.soundboard-fields .connect-btn { width: auto; flex: 0 0 auto; white-space: nowrap; }
-.soundboard-error { font-size: 11px; color: #ef8a9a; }
-
-/* Soundboard page */
-.soundboard-login { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
-.soundboard-login label { font-size: 12px; color: var(--muted); }
-.soundboard-login input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; font-family: var(--font); font-size: 14px; border-radius: var(--radius); }
-.sound-group { margin-bottom: 20px; }
-.sound-group-title {
-  display: flex; align-items: center; gap: 5px; cursor: pointer; list-style: none;
-  font-family: var(--font-display); font-weight: 700; font-size: 12px; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+/* Rule box (reuses .quote-box/.quote-box-header for the same card look) -
+   an alternative to the quote box, see render.php's ts_render_rulebox(). */
+.rule-list { list-style: none; counter-reset: rule; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.rule-list li { counter-increment: rule; display: flex; gap: 8px; font-size: 13px; color: var(--text); line-height: 1.5; }
+.rule-list li::before {
+  content: counter(rule); flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-dim); color: var(--accent);
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 10px; font-weight: 700;
 }
-/* Hides the browser's own default disclosure triangle - a custom chevron
-   (rotated via the [open] state below) replaces it instead. */
-.sound-group-title::-webkit-details-marker { display: none; }
-.sound-group-title::marker { content: ''; }
-.sound-group-chevron { width: 12px; height: 12px; flex-shrink: 0; transition: transform .15s; }
-.sound-group[open] .sound-group-chevron { transform: rotate(90deg); }
-.soundboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-.sound-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 10px; color: var(--text); cursor: pointer; font-family: var(--font); font-size: 12px; text-align: center; transition: background .15s, border-color .15s; }
-.sound-btn:hover { border-color: var(--accent); }
-.sound-btn.playing { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
-.sound-icon { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }
-.sound-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 
 /* Connect button */
 .connect-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; padding: 10px; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); border-radius: var(--radius); font-family: var(--font-display); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; text-decoration: none; transition: background .15s, color .15s; }
 .connect-btn:hover { background: var(--accent); color: #06181b; }
 .connect-btn svg { width: 16px; height: 16px; }
-
-/* Legal page (datenschutz.php) */
-.legal { text-align: left; margin-bottom: 8px; }
-.legal h2 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--text); margin-top: 22px; margin-bottom: 8px; }
-.legal h2:first-child { margin-top: 0; }
-.legal p { font-size: 13px; line-height: 1.6; color: var(--muted); margin-bottom: 10px; }
-.legal ul { font-size: 13px; line-height: 1.6; color: var(--muted); margin: 0 0 10px 18px; }
-.legal li { margin-bottom: 4px; }
-.legal code { font-family: var(--font-mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; color: var(--accent); }
-.legal a { color: var(--accent); }
-
-/* Footer link to the privacy page, present on every page - deliberately
-   understated (small, muted) rather than a prominent banner, matching the
-   "unobtrusive" requirement it was added for - but always present and
-   reachable in one click from anywhere on the site. */
-.legal-footer { text-align: center; margin-top: 10px; }
-.legal-footer a { font-size: 11px; color: var(--faint); text-decoration: none; }
-.legal-footer a:hover { color: var(--muted); text-decoration: underline; }
-
-/* Floating playback bar (soundboard.php) - always visible on that page
-   (see body.has-soundbar below for the bottom padding this requires, so it
-   doesn't cover content underneath it). Fixed to the viewport, not .wrap,
-   so it stays reachable regardless of scroll position on a long sound list. */
-body.has-soundbar { padding-bottom: 90px; }
-.soundbar {
-  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
-  width: calc(100% - 32px); max-width: 360px; z-index: 10;
-  display: flex; align-items: center; gap: 10px;
-  background: var(--surface); border: 1px solid var(--accent);
-  padding: 8px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
-}
-.soundbar[hidden] { display: none; }
-.soundbar-stop {
-  flex-shrink: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-  background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); cursor: pointer;
-}
-.soundbar-stop:hover { background: var(--accent); color: #06181b; }
-.soundbar-stop svg { width: 13px; height: 13px; }
-.soundbar-label { flex: 1; min-width: 0; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.soundbar-volume-icon { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
-.soundbar-volume { width: 70px; flex-shrink: 0; accent-color: var(--accent); }
-.soundbar-close {
-  flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
-  background: none; border: none; color: var(--faint); cursor: pointer;
-}
-.soundbar-close:hover { color: var(--muted); }
-.soundbar-close svg { width: 13px; height: 13px; }
-
-/* "Scroll to top" link at the very bottom of a long page (soundboard.php,
-   datenschutz.php) - relies on #top on the .wrap element + the global
-   scroll-behavior:smooth above, no JS needed. */
-.scroll-top { display: flex; align-items: center; justify-content: center; margin-top: 14px; color: var(--faint); }
-.scroll-top:hover { color: var(--muted); }
-.scroll-top svg { width: 18px; height: 18px; }
-
-.toggle-all-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
-.toggle-all-btn {
-  background: none; border: none; cursor: pointer; padding: 4px 0;
-  font-family: var(--font); font-size: 11px; font-weight: 600; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.04em;
-}
-.toggle-all-btn:hover { color: var(--accent); }

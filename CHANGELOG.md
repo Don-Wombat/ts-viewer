@@ -2,7 +2,7 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [v0.2.0] – Quote/rule box, online-time leaderboard, hero redesign
 
 ### Added
 - Optional quote box next to the channel tree, reading quotes from a
@@ -10,10 +10,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Optional online-time leaderboard (`TS_TRACK_ONLINE_TIME` +
   `TS_TRACK_INTERVAL`), tracked by a background poller
   (`cli/track_online_time.php`) independent of website traffic.
-- Optional password-gated soundboard subpage (`TS_SOUNDS_DIR` +
-  `TS_SOUNDBOARD_PASSWORD`, see the README's new "Soundboard" section) —
-  per-IP rate-limited login, a floating playback bar (stop/volume/dismiss),
-  collapsible sections.
+- Optional rule box next to the channel tree, a static numbered list of
+  house rules (`TS_RULES_TEXT`) - an alternative to the quote box above
+  (both can be on at once; they just stack).
 - `TS_HIDDEN_CHANNELS`: hide channels from the tree by exact name.
 - `TS_FOUNDED_YEAR`: optional "· since {year}" next to the brand subtitle.
 - Self-hosted fonts (`html/assets/fonts.css`) instead of a Google Fonts
@@ -30,8 +29,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   security headers and the error state — closes the gap left by the
   existing PHP-only tests, which never render or execute anything in a
   browser. Wired into CI as a new `browser-e2e` job in `ci.yml`.
-
-### Changed
 - `bin/mock_serverquery.php` now binds `0.0.0.0` instead of `127.0.0.1`, so
   it's reachable from a sibling Docker container (needed for the new E2E
   test) as well as the existing same-host subprocess use in

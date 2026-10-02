@@ -9,7 +9,3 @@ e2e-screenshots/
 # Private deployment working copy - its own separate (private) GitHub repo,
 # must never end up inside this public one.
 /salzwerk-viewer/
-
-# Soundboard clips (see TS_SOUNDS_DIR in .env.example) - your own, never
-# shipped with this project.
-/Sounds/

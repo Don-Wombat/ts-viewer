@@ -5,7 +5,7 @@ require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/ts_client.php';
 require_once __DIR__ . '/ts_online_time.php';
 
-function ts_render_tree(array $config, string $extraSidebarHtml = ''): string {
+function ts_render_tree(array $config): string {
     $data = ts_get_cached_or_fetch($config, fn() => ts_fetch_from_server($config));
     if (isset($data['error'])) {
         $err = $data['error'];
@@ -78,18 +78,18 @@ function ts_render_tree(array $config, string $extraSidebarHtml = ''): string {
     $h .= '<div class="footer">' . htmlspecialchars(ts_t('footer', ['time' => $updated, 'sec' => $config['ttl']])) . '</div>';
 
     $showQuotes = !empty($config['quote_channel_id']);
+    $showRules = !empty($config['rules_text']);
     $showLeaderboard = !empty($config['track_online_time']);
-    if (!$showQuotes && !$showLeaderboard && $extraSidebarHtml === '') {
+    if (!$showQuotes && !$showRules && !$showLeaderboard) {
         return $h;
     }
 
     $sidebar = '';
     if ($showLeaderboard) $sidebar .= ts_render_leaderboard(ts_online_time_top(ts_online_time_read($config['cache_dir']), 10));
     if ($showQuotes) $sidebar .= ts_render_quotebox($data['quotes'] ?? []);
-    // Appended last - currently always lands directly under the quote box
-    // (see the render order right above), which is exactly where the
-    // soundboard button/password gate below is meant to sit.
-    $sidebar .= $extraSidebarHtml;
+    // An alternative to the quote box, not necessarily a replacement - both
+    // can be on at once, they just stack in this same sidebar.
+    if ($showRules) $sidebar .= ts_render_rulebox($config['rules_text']);
 
     $out  = '<div class="layout">';
     $out .= '<div class="col-tree">' . $h . '</div>';
@@ -141,6 +141,24 @@ function ts_render_quotebox(array $quotes): string {
         }
         $h .= '</div>';
     }
+    $h .= '</div>';
+    return $h;
+}
+
+// $rulesText: already \n-unescaped by config.php - one rule per line, blank
+// lines ignored. A simpler sibling of the quote box: no attribution
+// parsing, just a static numbered list (TS_RULES_TEXT doesn't change
+// without a config/redeploy, unlike quotes read live from a TS channel).
+function ts_render_rulebox(string $rulesText): string {
+    $h = '<div class="quote-box rule-box">';
+    $h .= '<div class="quote-box-header">' . htmlspecialchars(ts_t('rules_title')) . '</div>';
+    $h .= '<ol class="rule-list">';
+    foreach (preg_split('/\r\n|\r|\n/', $rulesText) as $line) {
+        $line = trim($line);
+        if ($line === '') continue;
+        $h .= '<li>' . htmlspecialchars($line) . '</li>';
+    }
+    $h .= '</ol>';
     $h .= '</div>';
     return $h;
 }

@@ -43,6 +43,11 @@ docker/entrypoint.sh     Fixes TS_CACHE_DIR ownership at container start (surviv
 
 ## Running the tests
 
+Quick local run: `./test.sh` (add `full` to also run the Docker build and
+browser E2E locally); it wraps each step in `~/.claude/bin/qtest` for terse
+output, and after pushing, check CI with `~/.claude/bin/ci-status --wait`
+instead of reading the Actions log directly (see `~/.claude/CLAUDE.md` §9).
+
 There's no PHPUnit here — a couple of small, dependency-free scripts cover
 the parts that matter most:
 

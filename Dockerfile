@@ -1,7 +1,7 @@
 # Pinned to a digest for reproducible builds (currently php:8.3.36-apache - fixes CVE-2026-109618/-109619,
 # RCE in mod_php before 8.3.36; keep >= 8.3.36).
 # Dependabot (.github/dependabot.yml) proposes PRs when this changes.
-FROM php:8.3.36-apache@sha256:d89e8b3d2033c3179dcd9999d913670eb12a07410a95e60205c64e7d0fac7aef
+FROM php:8.5.0-apache@sha256:1d825469e3c69b10baf6a8a63b1e766b81c6edb44a01f91509fc148bfd0e5f3e
 RUN apt-get update && apt-get install -y sshpass openssh-client && rm -rf /var/lib/apt/lists/*
 # Don't announce the PHP version in an X-Powered-By header.
 RUN echo 'expose_php = Off' > /usr/local/etc/php/conf.d/zz-hide-version.ini

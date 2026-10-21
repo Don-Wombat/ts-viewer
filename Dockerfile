@@ -1,7 +1,10 @@
-# Pinned to a digest for reproducible builds (currently php:8.3-apache).
+# Pinned to a digest for reproducible builds (currently php:8.3.36-apache - fixes CVE-2026-109618/-109619,
+# RCE in mod_php before 8.3.36; keep >= 8.3.36).
 # Dependabot (.github/dependabot.yml) proposes PRs when this changes.
-FROM php:8.3-apache@sha256:060ed9c0f6e4bbe4f8b25a34ca1ec596b96d8f4011cf7ee7eb6b7eecf01cb74f
+FROM php:8.3.36-apache@sha256:d89e8b3d2033c3179dcd9999d913670eb12a07410a95e60205c64e7d0fac7aef
 RUN apt-get update && apt-get install -y sshpass openssh-client && rm -rf /var/lib/apt/lists/*
+# Don't announce the PHP version in an X-Powered-By header.
+RUN echo 'expose_php = Off' > /usr/local/etc/php/conf.d/zz-hide-version.ini
 COPY html/ /var/www/html/
 # Online-time leaderboard poller (see docker/entrypoint.sh) - not part of
 # the web root, and not bin/ (dev/test-only, never copied into the image).

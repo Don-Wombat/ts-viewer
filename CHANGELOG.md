@@ -2,6 +2,17 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [v0.2.1] – Security: PHP 8.3.36 (CVE-2026-109618, CVE-2026-109619)
+
+### Security
+- Base image bumped to `php:8.3.36-apache` (digest-pinned). 8.3.36 fixes two
+  critical remote-code-execution flaws in PHP's request memory handling
+  (CVE-2026-109618, CVE-2026-109619; affected: PHP < 8.3.36). The
+  Apache/mod_php image this project ships is the confirmed-exploitable
+  configuration, with no authentication needed - **update and redeploy.**
+- `expose_php = Off`: the container no longer announces its PHP version in
+  an `X-Powered-By` header.
+
 ## [v0.2.0] – Quote/rule box, online-time leaderboard, hero redesign
 
 ### Added
